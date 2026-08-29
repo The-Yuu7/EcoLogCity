@@ -80,35 +80,70 @@ Desarrollar e implementar un PMV web que optimice las rutas de distribución urb
 
 ---
 
-## 5. Arquitectura del Sistema
+## 5. Arquitectura del Sistema y Flujos de Trabajo
 
+### 5.1. Arquitectura de Componentes
 ```mermaid
-graph TD
-    subgraph Cliente [Capa de Presentación - Frontend]
-        UI[React / Vite + Vanilla CSS]
-        Map[Visor Cartográfico - Leaflet / OSM Huancayo]
-        Dash[Dashboard de Indicadores & Sostenibilidad]
+graph TB
+    subgraph Frontend [EcoLogCity Cliente - Frontend]
+        UI[React.js Web App]
+        Map[Componente de Mapa Leaflet]
+        Dash[Dashboard de Sostenibilidad]
     end
 
-    subgraph Servidor [Capa de Negocio - Backend]
-        API[API RESTful - Controladores & Servicios]
-        Auth[Módulo de Autenticación & Seguridad]
-        Engine[Motor de Optimización Metaheurística VRPTW / Green VRP]
-        CO2[Calculador de Emisiones de CO₂]
+    subgraph Backend [EcoLogCity Core - Backend API]
+        Controller[Controladores REST]
+        Auth[Filtro de Seguridad JWT]
+        subgraph Engine [Motor de Optimización Metaheurística]
+            VRP[Solucionador VRPTW: Algoritmo Genético / Tabú]
+            ElevFactor[Modelo de Corrección por Altitud - 3,250 msnm]
+            Carbon[Calculador de Huella de CO₂]
+        end
     end
 
-    subgraph Datos [Capa de Persistencia]
-        DB[(PostgreSQL + PostGIS)]
+    subgraph External [Servicios Externos]
+        Waze[Waze CCP / APIs de Tráfico Real]
+        OSM[Servidor de Mapas OpenStreetMap]
     end
 
-    UI --> API
-    Map --> API
-    Dash --> API
-    API --> Auth
-    API --> Engine
-    API --> CO2
-    API --> DB
+    subgraph Database [Capa de Datos]
+        PG[(PostgreSQL + PostGIS)]
+    end
+
+    UI -->|Petición JSON| Controller
+    Map -->|Renderizado de Rutas| UI
+    Dash -->|Solicitud de KPIs| Controller
+    Controller -->|Filtro de Token| Auth
+    Controller -->|Invocar Optimización| VRP
+    VRP -->|Corrección de Esfuerzo en Altura| ElevFactor
+    VRP -->|Conversión de Consumo a CO₂| Carbon
+    OSM -->|Carga de Capas Cartográficas| Map
+    Waze -->|Datos de Congestión en Huancayo| VRP
+    Controller -->|Consultas DQL/DML| PG
 ```
+
+### 5.2. Flujo del Proceso de Optimización de Rutas (VRPTW & Green VRP)
+```mermaid
+flowchart TD
+    Start([Inicio: Carga de Pedidos Diarios]) --> Parse[Geocodificación y Ventanas Horarias]
+    Parse --> CheckPlaca{¿Restricción Vehicular?}
+    CheckPlaca -- Sí --> Exclude[Excluir Vehículo de Flota Activa]
+    CheckPlaca -- No --> InitGA[Generar Población Inicial de Rutas]
+    Exclude --> InitGA
+    InitGA --> Eval[Evaluar Fitness: Distancia + Tiempo + Emisiones]
+    Eval --> FactorAlt[Aplicar Penalización por Altura en Huancayo]
+    FactorAlt --> Select[Selección de Padres y Cruce]
+    Select --> Mutate[Mutación de Secuencia de Ruta]
+    Mutate --> CheckTermination{¿Criterio de Parada Alcanzado?}
+    CheckTermination -- No --> Eval
+    CheckTermination -- Sí --> OptimalRoute[Ruta Óptima Seleccionada]
+    OptimalRoute --> RealTime{¿Evento de Tráfico Detectado?}
+    RealTime -- Sí --> ReOpt[Re-optimización Dinámica en <30s]
+    ReOpt --> Display[Mostrar Ruta en Leaflet Map]
+    RealTime -- No --> Display
+    Display --> End([Fin: Ejecución de Entrega])
+```
+
 
 ---
 
@@ -170,19 +205,24 @@ gitGraph
     commit id: "Inicial"
     branch develop
     checkout develop
-    commit id: "Base del Proyecto"
-    branch feature/backend-pedidos
-    checkout feature/backend-pedidos
-    commit id: "CRUD Pedidos"
+    commit id: "Estructura del Proyecto"
+    branch feature/motor-vrptw
+    checkout feature/motor-vrptw
+    commit id: "Motor Algoritmo Genético"
     checkout develop
-    merge feature/backend-pedidos id: "PR #1"
+    merge feature/motor-vrptw id: "PR #1: Motor"
+    branch feature/visor-leaflet
+    checkout feature/visor-leaflet
+    commit id: "Mapa Leaflet Huancayo"
+    checkout develop
+    merge feature/visor-leaflet id: "PR #2: Mapa"
     branch release/v1.0.0
     checkout release/v1.0.0
-    commit id: "Release Candidate"
+    commit id: "Release Candidate v1.0.0"
     checkout main
-    merge release/v1.0.0 id: "PMV Final" tag: "v1.0.0"
+    merge release/v1.0.0 id: "Entrega PMV Final" tag: "v1.0.0"
     checkout develop
-    merge release/v1.0.0 id: "Sync Develop"
+    merge release/v1.0.0 id: "Sync Develop v1.0.0"
 ```
 
 ### 7.1. Ramas Principales y de Soporte
