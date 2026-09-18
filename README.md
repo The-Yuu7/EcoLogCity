@@ -295,6 +295,12 @@ Acceso directo a la documentación oficial del repositorio:
 * [04. Registro de supuestos y restricciones](docs/01%20Inicio/04.%20Registro%20de%20supuestos%20y%20restricciones%20V_1_0_0.md)
 * [05. Registro de interesados](docs/01%20Inicio/05.%20Registro%20de%20interesados%20V_1_0_0.md)
 
+## Fase 02: Planificación del Proyecto
+* [01. Transformando a ágil](docs/02%20Planificación/01%20Transformando%20a%20ágil%20V_1_0_0.md)
+* [02. Artefactos Jira](docs/02%20Planificación/02%20Artefactos%20Jira%20V_1_0_0.md)
+* [03. Registro de riesgos](docs/02%20Planificación/03%20Registro%20de%20riesgos%20V_1_0_0.md)
+* [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
+
 ---
 <div align="center">
   <sub>Escuela Profesional de Ingeniería de Sistemas e Informática · Taller de Proyectos 2 · 2026</sub>
