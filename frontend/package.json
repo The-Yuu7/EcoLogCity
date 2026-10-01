@@ -1,0 +1,17 @@
+{
+  "name": "ecologcity-frontend",
+  "version": "1.0.0",
+  "description": "Frontend UI para EcoLogCity - Visor Cartográfico y Gestión de Pedidos",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "start": "npx serve public -l 3000"
+  },
+  "keywords": [
+    "leaflet",
+    "maps",
+    "huancayo",
+    "vrptw"
+  ],
+  "author": "EcoLogCity Team",
+  "license": "ISC"
+}
