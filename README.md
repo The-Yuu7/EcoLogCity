@@ -299,6 +299,13 @@ Acceso directo a la documentación oficial del repositorio:
 * [03. Registro de riesgos](docs/02%20Planificación/03%20Registro%20de%20riesgos%20V_1_0_0.md)
 * [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
 
+
+## Fase 03: Implementación (Sprint 1)
+* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_0.md)
+* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/02%20Registro%20de%20Impedimentos%20V_1_0_0.md)
+* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/03%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/04%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+
 ---
 <div align="center">
   <sub>Escuela Profesional de Ingeniería de Sistemas e Informática · Taller de Proyectos 2 · 2026</sub>
