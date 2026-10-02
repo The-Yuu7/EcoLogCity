@@ -164,9 +164,10 @@ EcoLogCity/
 │   │   ├── 04. Registro de supuestos y restricciones V_1_0_0.md
 │   │   └── 05. Registro de interesados V_1_0_0.md
 │   ├── 02 Planificación/          # Cronogramas, backlog y EDT/WBS
-│   ├── 03 Ejecución/              # Diseños técnicos y especificaciones
-│   ├── 04 Seguimiento y Control/  # Minutas de sprint y métricas QA
-│   ├── 05 Cierre/                 # Informes de entrega de PMV
+│   ├── 03 Implementación/             # Entregables del Sprint 1
+│   ├── 04 Ejecución/              # Diseños técnicos y especificaciones
+│   ├── 05 Seguimiento y Control/  # Minutas de sprint y métricas QA
+│   ├── 06 Cierre/                 # Informes de entrega de PMV
 │   └── otros/                     # Material técnico de soporte
 │
 ├── frontend/                      # Aplicación cliente (Web UI)
