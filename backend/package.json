@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "db:init": "node src/scripts/initDb.js",
     "test": "jest --detectOpenHandles --forceExit --runInBand",
     "test:coverage": "jest --coverage --detectOpenHandles --forceExit --runInBand"
   },

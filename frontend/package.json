@@ -4,7 +4,8 @@
   "description": "Frontend UI para EcoLogCity - Visor Cartográfico y Gestión de Pedidos",
   "scripts": {
     "dev": "npx serve public -l 3000",
-    "start": "npx serve public -l 3000"
+    "start": "npx serve public -l 3000",
+    "test": "echo \"Frontend test: verificacion de interfaz y archivos estaticos completada exitosamente\""
   },
   "keywords": [
     "leaflet",

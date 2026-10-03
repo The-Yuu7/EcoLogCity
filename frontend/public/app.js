@@ -2,7 +2,12 @@
 // EcoLogCity - Lógica del Cliente Frontend (Sprint 1)
 // ==============================================================================
 
-const API_BASE = 'http://localhost:8000/api/v1';
+// Detección dinámica de la URL del API (soporta desarrollo local separado, servidor unificado Express y despliegue Cloud)
+const API_BASE = window.__API_BASE__ || (
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8000'
+    ? 'http://localhost:8000/api/v1'
+    : '/api/v1'
+);
 
 // Coordenadas base de Huancayo (Cercado)
 const HUANCAYO_CENTER = [-12.0678, -75.2098];

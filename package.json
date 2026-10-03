@@ -1,0 +1,12 @@
+{
+  "name": "ecologcity",
+  "version": "1.0.0",
+  "description": "Plataforma de Optimización de Rutas Sostenibles - Huancayo",
+  "private": true,
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "npm --prefix backend install",
+    "test": "npm --prefix backend test",
+    "db:init": "npm --prefix backend run db:init"
+  }
+}
