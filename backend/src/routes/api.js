@@ -21,6 +21,17 @@ router.get('/pedidos/stats', handleObtenerStats);
 router.get('/pedidos/:id', handleObtenerPedidoPorId);
 router.patch('/pedidos/:id/cancelar', handleCancelarPedido);
 
+// Rutas de Gestión de Flota de Vehículos (RF-01)
+router.get('/vehiculos', async (req, res) => {
+  try {
+    const { pool } = require('../config/db');
+    const result = await pool.query('SELECT * FROM vehiculos WHERE activo = true ORDER BY capacidad_peso_kg DESC;');
+    res.json({ ok: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Health check
 router.get('/health', (req, res) => {
   res.json({

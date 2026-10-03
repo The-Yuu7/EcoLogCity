@@ -167,3 +167,14 @@ INSERT INTO pedidos (
     'REGISTRADO'
 )
 ON CONFLICT (codigo_seguimiento) DO NOTHING;
+
+-- 3. Flota de Vehículos DistriRápido S.A.C. (Huancayo)
+INSERT INTO vehiculos (
+    placa, marca, modelo, tipo_vehiculo, capacidad_peso_kg, capacidad_volumen_m3, consumo_gal_km, tipo_combustible, activo
+) VALUES
+    ('W2X-780', 'Hyundai', 'H350 Cargo', 'FURGON_MEDIANO', 1500.00, 12.000, 0.1200, 'DIESEL', true),
+    ('B3F-912', 'Toyota', 'Hilux Reparto', 'CAMIONETA', 1000.00, 6.500, 0.1000, 'DIESEL', true),
+    ('C4M-456', 'JAC', 'Sunray Eco-Green', 'FURGON_GRANDE', 2000.00, 15.000, 0.0850, 'GNV', true),
+    ('D8K-112', 'Renault', 'Master Express', 'FURGON_MEDIANO', 1600.00, 11.500, 0.1100, 'DIESEL', true)
+ON CONFLICT (placa) DO NOTHING;
+
