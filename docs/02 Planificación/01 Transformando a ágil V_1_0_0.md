@@ -27,6 +27,25 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **quiero** visualizar en mi dispositivo móvil el mapa interactivo con mis paradas ordenadas,  
 **para** seguir la ruta óptima generada y cumplir con mis ventanas horarias de entrega.  
 
+
+### Historia de Usuario 3
+**ID:** US-003  
+**Título:** Motor Metaheurístico de Optimización (VRPTW & Green VRP)  
+**Épica Relacionada:** EP-01 [Módulo de Gestión de Pedidos]  
+**Redacción:**  
+**Como** Despachador,  
+**quiero** presionar un botón que ejecute un algoritmo inteligente de ruteo,  
+**para** agrupar automáticamente los pedidos pendientes cuidando la capacidad de los camiones y minimizando mis costos y emisiones CO2.  
+
+### Historia de Usuario 4
+**ID:** US-004  
+**Título:** Trazado de Rutas en Calles Reales (OSRM)  
+**Épica Relacionada:** EP-02 [Visor Cartográfico y Seguimiento]  
+**Redacción:**  
+**Como** Despachador,  
+**quiero** ver las rutas calculadas dibujadas sobre las calles reales en el mapa de Leaflet,  
+**para** tener una perspectiva geográfica certera y distinguir los vehículos por diferentes colores.  
+
 ### Historia Técnica (Enabler) 1
 **ID:** EN-001  
 **Título:** Integración Base de Datos Espacial PostGIS  
