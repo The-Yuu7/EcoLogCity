@@ -780,11 +780,11 @@ window.optimizarRutas = async function () {
         coordString.push(`${almacen.lon},${almacen.lat}`); // Retorno
 
         // Dibujar Almacén principal
-        L.marker([almacen.lat, almacen.lon]).addTo(vrpLayerGroup).bindPopup('<b>Almacén DistriRápido</b>');
+        L.circleMarker([almacen.lat, almacen.lon], {radius: 10, fillColor: '#000', color: '#fff', weight: 3, fillOpacity: 1}).addTo(vrpLayerGroup).bindPopup('<b>📍 PUNTO DE INICIO (ALMACÉN)</b><br>DistriRápidoén DistriRápido</b>');
 
         // Llamar a OSRM Demo API para obtener la polyline real de las calles
         try {
-            const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${coordString.join(';')}?overview=full&geometries=geojson`;
+            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordString.join(';')}?overview=full&geometries=geojson`;
             const osrmRes = await fetch(osrmUrl);
             const osrmData = await osrmRes.json();
             
@@ -801,6 +801,12 @@ window.optimizarRutas = async function () {
             }
         } catch(e) {
             console.warn("No se pudo conectar a OSRM para trazar las calles, usando fallback de linea recta.");
+            // DRAW FALLBACK STRAIGHT LINES
+            const latlngs = [];
+            latlngs.push([almacen.lat, almacen.lon]);
+            rutaObj.paradas.forEach(p => latlngs.push([p.lat, p.lon]));
+            latlngs.push([almacen.lat, almacen.lon]);
+            L.polyline(latlngs, {color: color, weight: 3, dashArray: '5, 5', opacity: 0.8}).addTo(vrpLayerGroup);
         }
     });
 
