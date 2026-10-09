@@ -164,7 +164,9 @@ EcoLogCity/
 │   │   ├── 04. Registro de supuestos y restricciones V_1_0_0.md
 │   │   └── 05. Registro de interesados V_1_0_0.md
 │   ├── 02 Planificación/          # Cronogramas, backlog y EDT/WBS
-│   ├── 03 Implementación/             # Entregables del Sprint 1
+│   ├── 03 Implementación/             # Entregables de los Sprints
+│   │   ├── Sprint 1/
+│   │   └── Sprint 2/
 │   ├── 04 Ejecución/              # Diseños técnicos y especificaciones
 │   ├── 05 Seguimiento y Control/  # Minutas de sprint y métricas QA
 │   ├── 06 Cierre/                 # Informes de entrega de PMV
@@ -301,13 +303,21 @@ Acceso directo a la documentación oficial del repositorio:
 * [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
 
 
-## Fase 03: Implementación (Sprint 1)
-* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_0.md)
-* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/02%20Registro%20de%20Impedimentos%20V_1_0_0.md)
-* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/03%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
-* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/04%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+## Fase 03: Implementación (Sprint 1 y 2)
+
+### Sprint 1
+* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%201/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_0.md)
+* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%201/02%20Registro%20de%20Impedimentos%20V_1_0_0.md)
+* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/03%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/04%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+
+### Sprint 2
+* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%202/01%20Informe%20de%20estado%20del%20proyecto%20V_2_0_0.md)
+* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%202/02%20Registro%20de%20Impedimentos%20V_2_0_0.md)
+* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/03%20Revisi%C3%B3n%20del%20Sprint%20V_2_0_0.md)
+* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/04%20Retrospectiva%20del%20Sprint%20V_2_0_0.md)
 
 ---
 <div align="center">
-  <sub>Escuela Profesional de Ingeniería de Sistemas e Informática · Taller de Proyectos 2 · 2026</sub>
+  <sub>Escuela Profesional de Ingeniería de Sistemas e Informática – Taller de Proyectos 2 – 2026</sub>
 </div>

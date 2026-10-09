@@ -711,3 +711,107 @@ function exportarPedidosCSV() {
   link.click();
   document.body.removeChild(link);
 }
+
+
+// -------------------------------------------------------------
+// SPRINT 2: MOTOR VRP & TRAZADO EN LEAFLET (OSRM)
+// -------------------------------------------------------------
+let vrpLayerGroup = L.layerGroup().addTo(map);
+
+window.optimizarRutas = async function () {
+  const btn = document.getElementById('btn-optimizar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="animate-pulse">Optimizando...</span>';
+
+  try {
+    const res = await fetch(`${API_BASE}/rutas/optimizar`, { method: 'POST' });
+    const json = await res.json();
+
+    if (!json.ok) {
+      alert(`Error en Motor VRP: ${json.error}`);
+      return;
+    }
+
+    const { rutas, resumen, almacen } = json.data;
+
+    // Actualizar Modal de Resumen
+    document.getElementById('vrp-dist').innerText = resumen.distancia_total_km;
+    document.getElementById('vrp-ahorro').innerText = resumen.ahorro_estimado_km;
+    document.getElementById('vrp-co2').innerText = resumen.emisiones_evitadas_kg_co2;
+    document.getElementById('vrp-asignados').innerText = resumen.pedidos_asignados;
+    document.getElementById('vrp-noasignados').innerText = resumen.pedidos_sin_asignar;
+    
+    document.getElementById('vrp-modal').classList.remove('hidden');
+
+    // Limpiar rutas previas del mapa
+    vrpLayerGroup.clearLayers();
+    ordersLayerGroup.clearLayers(); // Ocultar puntos sueltos para mostrar las secuencias limpias
+
+    // Paleta de colores para vehiculos (hasta 5 colores)
+    const colores = ['#4F46E5', '#E11D48', '#059669', '#D97706', '#9333EA'];
+
+    // Para cada ruta (Vehículo)
+    rutas.forEach(async (rutaObj, idx) => {
+        const color = colores[idx % colores.length];
+        
+        // Armar array de coordenadas para OSRM [lon, lat]
+        const coordString = [];
+        coordString.push(`${almacen.lon},${almacen.lat}`); // Salida
+        
+        rutaObj.paradas.forEach(p => {
+            coordString.push(`${p.lon},${p.lat}`);
+            
+            // Re-dibujar marcador pero con el color del vehículo
+            const m = L.circleMarker([p.lat, p.lon], {
+                radius: 8,
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(vrpLayerGroup);
+            
+            m.bindPopup(`<b>Vehículo:</b> ${rutaObj.vehiculo.placa} <br> <b>Pedido:</b> ${p.codigo}`);
+        });
+
+        coordString.push(`${almacen.lon},${almacen.lat}`); // Retorno
+
+        // Dibujar Almacén principal
+        L.marker([almacen.lat, almacen.lon]).addTo(vrpLayerGroup).bindPopup('<b>Almacén DistriRápido</b>');
+
+        // Llamar a OSRM Demo API para obtener la polyline real de las calles
+        try {
+            const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${coordString.join(';')}?overview=full&geometries=geojson`;
+            const osrmRes = await fetch(osrmUrl);
+            const osrmData = await osrmRes.json();
+            
+            if(osrmData.routes && osrmData.routes.length > 0) {
+                const geojsonFeature = osrmData.routes[0].geometry;
+                L.geoJSON(geojsonFeature, {
+                    style: {
+                        color: color,
+                        weight: 4,
+                        opacity: 0.8,
+                        dashArray: '10, 5' // Linea punteada de ruta sugerida
+                    }
+                }).addTo(vrpLayerGroup);
+            }
+        } catch(e) {
+            console.warn("No se pudo conectar a OSRM para trazar las calles, usando fallback de linea recta.");
+        }
+    });
+
+    // Actualizar Tablas para reflejar que estan PLANIFICADOS
+    cargarPedidos();
+    cargarEstadisticas();
+
+  } catch (err) {
+    alert('Error al conectar con el servidor VRP');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        Optimizar Rutas (VRP)
+    `;
+  }
+};

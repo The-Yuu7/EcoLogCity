@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { handleOptimizarRutas } = require('../controllers/rutaController');
 
 const { handleGeocodificar, handleGeocodificarReversa } = require('../controllers/geocodingController');
 const {
@@ -20,6 +21,9 @@ router.post('/pedidos', handleCrearPedido);
 router.get('/pedidos/stats', handleObtenerStats);
 router.get('/pedidos/:id', handleObtenerPedidoPorId);
 router.patch('/pedidos/:id/cancelar', handleCancelarPedido);
+
+// Rutas de Gestión de Flota de Vehículos (RF-01)
+router.post('/rutas/optimizar', handleOptimizarRutas);
 
 // Rutas de Gestión de Flota de Vehículos (RF-01)
 router.get('/vehiculos', async (req, res) => {
