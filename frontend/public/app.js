@@ -716,9 +716,12 @@ function exportarPedidosCSV() {
 // -------------------------------------------------------------
 // SPRINT 2: MOTOR VRP & TRAZADO EN LEAFLET (OSRM)
 // -------------------------------------------------------------
-let vrpLayerGroup = L.layerGroup().addTo(map);
+let vrpLayerGroup = L.layerGroup();
 
 window.optimizarRutas = async function () {
+  if (!map.hasLayer(vrpLayerGroup)) {
+      vrpLayerGroup.addTo(map);
+  }
   const btn = document.getElementById('btn-optimizar');
   btn.disabled = true;
   btn.innerHTML = '<span class="animate-pulse">Optimizando...</span>';
