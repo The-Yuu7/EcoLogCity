@@ -15,11 +15,11 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
 
 async function optimizarRutasVRP() {
     // 1. Obtener pedidos pendientes
-    const pedidosRes = await pool.query("SELECT * FROM pedidos WHERE estado = 'REGISTRADO' ORDER BY prioridad DESC, ventana_inicio ASC");
+    const pedidosRes = await pool.query("SELECT * FROM pedidos WHERE estado IN ('REGISTRADO', 'PLANIFICADO') ORDER BY prioridad DESC, ventana_inicio ASC");
     const pedidos = pedidosRes.rows;
 
     if (pedidos.length === 0) {
-        return { rutas: [], resumen: { distancia_total_km: 0, emisiones_evitadas_kg: 0 } };
+        return { rutas: [], resumen: { distancia_total_km: 0, ahorro_estimado_km: 0, emisiones_evitadas_kg_co2: 0, pedidos_asignados: 0, pedidos_sin_asignar: 0 } };
     }
 
     // 2. Obtener flota activa
