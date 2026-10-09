@@ -535,9 +535,49 @@ function filtrarYRenderizarTabla() {
 /**
  * Centra y hace zoom suave sobre el marcador de un pedido en el mapa
  */
-window.centrarEnMapa = function (lat, lon, nombre) {
-  map.flyTo([lat, lon], 17, { duration: 1.2 });
+window.centrarEnMapa = async function (lat, lon, nombre) {
   window.scrollTo({ top: 120, behavior: 'smooth' });
+  
+  if (!map.hasLayer(singleRouteLayerGroup)) {
+      singleRouteLayerGroup.addTo(map);
+  }
+  singleRouteLayerGroup.clearLayers();
+  
+  // Almacén / Local (Casita)
+  const almacenLat = -12.066;
+  const almacenLon = -75.204;
+  
+  const iconCasita = L.divIcon({
+      html: '<div style="font-size: 26px; text-shadow: 2px 2px 4px rgba(0,0,0,0.4);">🏠</div>',
+      className: 'custom-div-icon',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+  });
+  
+  L.marker([almacenLat, almacenLon], {icon: iconCasita}).addTo(singleRouteLayerGroup).bindPopup('<b>🏠 Local Comercial (Inicio)</b>').openPopup();
+  
+  // Fetch OSRM route for single item
+  try {
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${almacenLon},${almacenLat};${lon},${lat}?overview=full&geometries=geojson`;
+      const res = await fetch(osrmUrl);
+      const data = await res.json();
+      
+      if(data.routes && data.routes.length > 0) {
+          const geojsonFeature = data.routes[0].geometry;
+          L.geoJSON(geojsonFeature, {
+              style: { color: '#ef4444', weight: 5, opacity: 0.9, dashArray: '8, 8' }
+          }).addTo(singleRouteLayerGroup);
+          
+          // Ajustar la vista para que se vea toda la ruta
+          const bounds = L.latLngBounds([almacenLat, almacenLon], [lat, lon]);
+          map.flyToBounds(bounds, { padding: [50, 50], duration: 1.2 });
+      } else {
+          map.flyTo([lat, lon], 17, { duration: 1.2 });
+      }
+  } catch(e) {
+      console.warn("Error OSRM", e);
+      map.flyTo([lat, lon], 17, { duration: 1.2 });
+  }
 };
 
 /**
@@ -717,6 +757,7 @@ function exportarPedidosCSV() {
 // SPRINT 2: MOTOR VRP & TRAZADO EN LEAFLET (OSRM)
 // -------------------------------------------------------------
 let vrpLayerGroup = L.layerGroup();
+let singleRouteLayerGroup = L.layerGroup();
 
 window.optimizarRutas = async function () {
   if (!map.hasLayer(vrpLayerGroup)) {
@@ -748,6 +789,7 @@ window.optimizarRutas = async function () {
 
     // Limpiar rutas previas del mapa
     vrpLayerGroup.clearLayers();
+    if(typeof singleRouteLayerGroup !== 'undefined') singleRouteLayerGroup.clearLayers();
     ordersLayerGroup.clearLayers(); // Ocultar puntos sueltos para mostrar las secuencias limpias
 
     // Paleta de colores para vehiculos (hasta 5 colores)
@@ -780,7 +822,13 @@ window.optimizarRutas = async function () {
         coordString.push(`${almacen.lon},${almacen.lat}`); // Retorno
 
         // Dibujar Almacén principal
-        L.circleMarker([almacen.lat, almacen.lon], {radius: 10, fillColor: '#000', color: '#fff', weight: 3, fillOpacity: 1}).addTo(vrpLayerGroup).bindPopup('<b>📍 PUNTO DE INICIO (ALMACÉN)</b><br>DistriRápidoén DistriRápido</b>');
+        const iconCasitaVrp = L.divIcon({
+            html: '<div style="font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🏠</div>',
+            className: 'custom-div-icon',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        L.marker([almacen.lat, almacen.lon], {icon: iconCasitaVrp}).addTo(vrpLayerGroup).bindPopup('<b>🏠 Local Central (Inicio)</b><br>DistriRápidoén DistriRápido</b>');
 
         // Llamar a OSRM Demo API para obtener la polyline real de las calles
         try {
