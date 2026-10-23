@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir Frontend Estático (Sprint 1 UI)
+// Servir Frontend Estático
 const frontendPath = path.join(__dirname, '../../frontend/public');
 app.use(express.static(frontendPath));
 
@@ -24,7 +24,7 @@ app.get('/api', (req, res) => {
     version: '1.0.0-alpha',
     descripcion: 'Plataforma de Optimización de Rutas Sostenibles - Huancayo',
     documentacion: '/api/v1/health',
-    sprint: 'Sprint 1: Infraestructura y Gestión de Pedidos Geocodificados',
+    sprint: 'Sprint 2: Optimización de Rutas, Gestión de Flota y Control de Acceso por Roles',
   });
 });
 

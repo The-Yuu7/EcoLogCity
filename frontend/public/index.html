@@ -76,38 +76,32 @@
           🌱
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold tracking-tight text-white">EcoLogCity</h1>
-            <span class="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full uppercase tracking-wider">
-              Sprint 1 Ready
-            </span>
-          </div>
+          <h1 class="text-lg font-bold tracking-tight text-white">EcoLogCity</h1>
           <p class="text-xs text-slate-400">
             DistriRápido S.A.C. · Optimizador de Rutas Sostenibles en Altitud (Huancayo, 3,250 msnm)
           </p>
         </div>
       </div>
 
-      <!-- Action Buttons & Cloud Status -->
+      <!-- Acciones y Sesión -->
       <div class="flex items-center flex-wrap gap-2 text-xs">
-        <div class="bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/80 flex items-center gap-2 text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Supabase PostgreSQL + PostGIS</span>
-        </div>
-
         <button id="btn-abrir-flota" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg font-medium border border-slate-700 transition flex items-center gap-1.5">
           <span>🚚</span>
-          <span>Flota (4 Vehículos)</span>
-        </button>
-
-        <button id="btn-cargar-demo" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-semibold shadow-sm transition flex items-center gap-1.5">
-          <span>⚡</span>
-          <span>Demo Express Huancayo</span>
+          <span>Gestión de Flota</span>
         </button>
 
         <button id="btn-exportar-csv" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-medium border border-slate-700 transition" title="Exportar pedidos a CSV">
           <span>📥 CSV</span>
         </button>
+
+        <!-- Usuario en sesión (US-007) -->
+        <div class="flex items-center gap-2 bg-slate-800/80 pl-3 pr-1 py-1 rounded-lg border border-slate-700/80">
+          <span id="sesion-nombre" class="text-slate-200 font-medium">--</span>
+          <span id="sesion-rol" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"></span>
+          <button id="btn-cerrar-sesion" class="text-slate-400 hover:text-white hover:bg-slate-700 px-2 py-0.5 rounded transition" title="Cerrar sesión">
+            Salir
+          </button>
+        </div>
       </div>
 
     </div>
@@ -147,7 +141,7 @@
         <!-- Progress Gauge -->
         <div class="mt-2">
           <div class="flex justify-between text-[10px] text-slate-400 mb-1">
-            <span>Ocupación de Furgón (1,500 kg)</span>
+            <span id="kpi-capacidad-flota">Ocupación de la flota activa</span>
             <span id="kpi-porcentaje-carga">0%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -184,7 +178,7 @@
           <span class="text-[11px] text-slate-500">(Diésel S/ 17.50/gal)</span>
         </div>
         <div class="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-          <span>📉 Ahorro meta Sprint 2:</span>
+          <span>📉 Ahorro meta:</span>
           <span id="kpi-ahorro-soles">~S/ -- (15%)</span>
         </div>
       </div>
@@ -192,10 +186,10 @@
     </div>
 
     
-    <!-- SPRINT 2: Optimizar Rutas Banner (VRP) -->
-    <div class="bg-gradient-to-r from-indigo-50 to-white p-6 rounded-2xl shadow-sm border border-indigo-200 mb-6 flex justify-between items-center">
+    <!-- Motor de Optimización de Rutas (US-003) - Solo Administrador -->
+    <div data-solo-admin class="hidden bg-gradient-to-r from-indigo-50 to-white p-6 rounded-2xl shadow-sm border border-indigo-200 mb-6 flex justify-between items-center">
         <div>
-            <h2 class="text-xl font-bold text-indigo-900">🚀 Motor de Optimización VRP (Sprint 2)</h2>
+            <h2 class="text-xl font-bold text-indigo-900">🚀 Motor de Optimización de Rutas</h2>
             <p class="text-sm text-indigo-700 mt-1">Habilita la optimización inteligente: Agrupa pedidos por peso/volumen y calcula las rutas más eficientes usando OSRM.</p>
         </div>
         <button id="btn-optimizar" onclick="optimizarRutas()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg flex items-center gap-2 transition transform hover:scale-105">
@@ -354,7 +348,7 @@
             <!-- Botón de Envío -->
             <button type="submit" id="btn-submit"
               class="w-full mt-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
-              <span>💾 Guardar Pedido en PostgreSQL</span>
+              <span>💾 Guardar Pedido</span>
             </button>
           </form>
         </div>
@@ -428,10 +422,10 @@
       <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-slate-100 gap-3">
         <div>
           <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <span>📋 Directorio de Pedidos Registrados</span>
+            <span id="titulo-directorio">📋 Mis Pedidos Registrados</span>
             <span id="badge-contador-pedidos" class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold">0</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5">Paradas geocodificadas listas para el Motor Metaheurístico VRPTW (Sprint 2)</p>
+          <p id="subtitulo-directorio" class="text-xs text-slate-500 mt-0.5">Pedidos que usted registró, geocodificados y listos para planificar</p>
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
@@ -468,6 +462,7 @@
             <tr>
               <th class="py-3 px-3.5">Código</th>
               <th class="py-3 px-3.5">Cliente</th>
+              <th data-solo-admin class="hidden py-3 px-3.5">Registrado por</th>
               <th class="py-3 px-3.5">Distrito / Dirección</th>
               <th class="py-3 px-3.5">Coordenadas</th>
               <th class="py-3 px-3.5">Ventana Horaria</th>
@@ -479,7 +474,7 @@
           </thead>
           <tbody id="pedidos-tbody" class="divide-y divide-slate-100 font-normal">
             <tr>
-              <td colspan="9" class="text-center py-8 text-slate-400">Cargando pedidos de Supabase PostgreSQL...</td>
+              <td colspan="10" class="text-center py-8 text-slate-400">Cargando pedidos...</td>
             </tr>
           </tbody>
         </table>
@@ -495,7 +490,7 @@
       <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
         <div>
           <h3 class="text-base font-bold flex items-center gap-2">
-            <span>🚚 Flota de Vehículos Activa</span>
+            <span>🚚 Gestión de Flota</span>
             <span class="text-xs font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
               DistriRápido S.A.C.
             </span>
@@ -505,7 +500,32 @@
         <button id="btn-cerrar-flota" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
       </div>
 
-      <div class="p-6">
+      <div class="p-6 max-h-[70vh] overflow-y-auto space-y-5">
+        <!-- Registro de vehículo: solo Administrador -->
+        <form id="form-vehiculo" data-solo-admin class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <h4 class="text-sm font-bold text-slate-900">➕ Registrar vehículo</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <input id="v-placa" required maxlength="10" placeholder="Placa (W2X-780)" class="px-3 py-2 border border-slate-300 rounded-lg font-mono uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input id="v-marca" required placeholder="Marca" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input id="v-modelo" required placeholder="Modelo" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <select id="v-tipo" class="px-3 py-2 border border-slate-300 rounded-lg bg-white">
+              <option value="CAMIONETA">Camioneta</option>
+              <option value="FURGON_MEDIANO" selected>Furgón mediano</option>
+              <option value="FURGON_GRANDE">Furgón grande</option>
+            </select>
+            <input id="v-peso" type="number" step="1" min="1" required placeholder="Capacidad kg" class="px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input id="v-volumen" type="number" step="0.1" min="0.1" required placeholder="Capacidad m³" class="px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input id="v-consumo" type="number" step="0.001" min="0.001" value="0.12" required title="Consumo (gal/km)" class="px-3 py-2 border border-slate-300 rounded-lg font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <select id="v-combustible" class="px-3 py-2 border border-slate-300 rounded-lg bg-white">
+              <option value="DIESEL">Diésel</option>
+              <option value="GNV">GNV</option>
+            </select>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" id="btn-guardar-vehiculo" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-semibold transition">Guardar vehículo</button>
+          </div>
+        </form>
+
         <div id="flota-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="text-center py-6 text-slate-400 col-span-2">Cargando vehículos de la base de datos...</div>
         </div>
@@ -527,13 +547,12 @@
       </div>
       <div class="flex items-center gap-3">
         <span>Patrocinador: <b>DistriRápido S.A.C.</b></span>
-        <span>•</span>
-        <span>Sprint 1 Entregado</span>
       </div>
     </div>
   </footer>
 
   <!-- Frontend Logic Script -->
+  <script src="session.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

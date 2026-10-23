@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth, requireRole } = require('../middleware/auth');
+const { ROLES } = require('../utils/auth');
 const { handleOptimizarRutas } = require('../controllers/rutaController');
+const { handleLogin, handleSesionActual } = require('../controllers/authController');
 
 const { handleGeocodificar, handleGeocodificarReversa } = require('../controllers/geocodingController');
 const {
@@ -10,40 +13,46 @@ const {
   handleObtenerPedidoPorId,
   handleCancelarPedido,
 } = require('../controllers/pedidoController');
+const {
+  handleListarVehiculos,
+  handleCrearVehiculo,
+  handleCambiarEstadoVehiculo,
+} = require('../controllers/vehiculoController');
+
+// Health check (público)
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'EcoLogCity API',
+    env: process.env.NODE_ENV || 'development',
+  });
+});
+
+// Autenticación (US-007)
+router.post('/auth/login', handleLogin);
+router.get('/auth/me', requireAuth, handleSesionActual);
+
+// Desde aquí todas las rutas requieren sesión iniciada
+router.use(requireAuth);
 
 // Rutas de Geocodificación (US-001)
 router.get('/geocodificar', handleGeocodificar);
 router.get('/geocodificar/reversa', handleGeocodificarReversa);
 
-// Rutas de Gestión de Pedidos (US-001 / EP-01)
+// Rutas de Gestión de Pedidos (US-001 / US-009): el admin ve el directorio general, el usuario solo los suyos
 router.get('/pedidos', handleListarPedidos);
 router.post('/pedidos', handleCrearPedido);
 router.get('/pedidos/stats', handleObtenerStats);
 router.get('/pedidos/:id', handleObtenerPedidoPorId);
 router.patch('/pedidos/:id/cancelar', handleCancelarPedido);
 
-// Rutas de Gestión de Flota de Vehículos (RF-01)
-router.post('/rutas/optimizar', handleOptimizarRutas);
+// Motor de Optimización de Rutas (US-003): solo administrador
+router.post('/rutas/optimizar', requireRole(ROLES.ADMIN), handleOptimizarRutas);
 
-// Rutas de Gestión de Flota de Vehículos (RF-01)
-router.get('/vehiculos', async (req, res) => {
-  try {
-    const { pool } = require('../config/db');
-    const result = await pool.query('SELECT * FROM vehiculos WHERE activo = true ORDER BY capacidad_peso_kg DESC;');
-    res.json({ ok: true, data: result.rows });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// Health check
-router.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    service: 'EcoLogCity API - Core Sprint 1',
-    env: process.env.NODE_ENV || 'development',
-  });
-});
+// Gestión de Flota de Vehículos (US-008): lectura para todos, cambios solo administrador
+router.get('/vehiculos', handleListarVehiculos);
+router.post('/vehiculos', requireRole(ROLES.ADMIN), handleCrearVehiculo);
+router.patch('/vehiculos/:id/estado', requireRole(ROLES.ADMIN), handleCambiarEstadoVehiculo);
 
 module.exports = router;

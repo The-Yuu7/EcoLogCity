@@ -3,7 +3,7 @@ const { ZodError } = require('zod');
 
 async function handleCrearPedido(req, res) {
   try {
-    const resultado = await pedidoService.crearPedido(req.body);
+    const resultado = await pedidoService.crearPedido(req.body, req.usuario);
     return res.status(201).json({
       ok: true,
       mensaje: 'Pedido registrado con éxito',
@@ -28,7 +28,7 @@ async function handleCrearPedido(req, res) {
 async function handleListarPedidos(req, res) {
   try {
     const { distrito, estado, limit } = req.query;
-    const pedidos = await pedidoService.listarPedidos({ distrito, estado, limit });
+    const pedidos = await pedidoService.listarPedidos({ distrito, estado, limit }, req.usuario);
     return res.status(200).json({
       ok: true,
       total: pedidos.length,
@@ -44,7 +44,7 @@ async function handleListarPedidos(req, res) {
 
 async function handleObtenerStats(req, res) {
   try {
-    const stats = await pedidoService.obtenerEstadisticasPedidos();
+    const stats = await pedidoService.obtenerEstadisticasPedidos(req.usuario);
     return res.status(200).json({
       ok: true,
       data: stats,
@@ -59,7 +59,7 @@ async function handleObtenerStats(req, res) {
 
 async function handleObtenerPedidoPorId(req, res) {
   try {
-    const pedido = await pedidoService.obtenerPedidoPorId(req.params.id);
+    const pedido = await pedidoService.obtenerPedidoPorId(req.params.id, req.usuario);
     if (!pedido) {
       return res.status(404).json({
         ok: false,
@@ -80,7 +80,7 @@ async function handleObtenerPedidoPorId(req, res) {
 
 async function handleCancelarPedido(req, res) {
   try {
-    const cancelado = await pedidoService.cancelarPedido(req.params.id);
+    const cancelado = await pedidoService.cancelarPedido(req.params.id, req.usuario);
     if (!cancelado) {
       return res.status(404).json({
         ok: false,

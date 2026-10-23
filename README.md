@@ -56,12 +56,13 @@ Desarrollar e implementar un PMV web que optimice las rutas de distribución urb
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        MÓDULOS DE ECOLogCity                           │
 ├────────────────────────────────────────────────────────────────────────┤
-│  [1] Gestión de Pedidos     : Registro, geocodificación y ventanas.    │
-│  [2] Flota y Conductores    : Capacidades, combustible y turnos.       │
-│  [3] Motor Metaheurístico   : Resolución algorítmica VRPTW / Green VRP.│
-│  [4] Visor Cartográfico     : Mapa interactivo (Leaflet/OSM Huancayo). │
-│  [5] Dashboard Analítico    : KPIs logísticos y calculadora de CO₂.    │
-│  [6] Re-enrutamiento        : Ajuste dinámico de secuencias en ruta.   │
+│  [1] Acceso y Roles         : Login con roles Admin y Usuario.         │
+│  [2] Gestión de Pedidos     : Registro, geocodificación y ventanas.    │
+│  [3] Gestión de Flota       : Alta, baja y capacidades de vehículos.   │
+│  [4] Motor de Optimización  : Heurística VRPTW / Green VRP.            │
+│  [5] Visor Cartográfico     : Mapa interactivo (Leaflet/OSM Huancayo). │
+│  [6] Dashboard Analítico    : KPIs logísticos y calculadora de CO₂.    │
+│  [7] Re-enrutamiento        : Ajuste dinámico (planificado).           │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -264,8 +265,17 @@ cp .env.example .env
 ```bash
 cd backend
 npm install
+npm run db:init   # crea tablas (incluye usuarios y roles) y carga datos semilla
 npm run dev
 ```
+
+#### Cuentas de prueba
+El sistema requiere iniciar sesión en `login.html`. Los datos semilla crean dos cuentas (solo para desarrollo):
+
+| Rol | Correo | Contraseña | Permisos |
+| :--- | :--- | :--- | :--- |
+| Administrador | `admin@ecologcity.pe` | `Admin2026!` | Directorio general de pedidos, optimización de rutas y gestión de flota (registrar, dar de baja, reactivar). |
+| Usuario | `usuario@ecologcity.pe` | `Usuario2026!` | Registra pedidos y ve solo los suyos; consulta la flota activa. |
 
 #### Iniciar Frontend (en otra terminal)
 ```bash
@@ -297,7 +307,7 @@ Acceso directo a la documentación oficial del repositorio:
 * [05. Registro de interesados](docs/01%20Inicio/05.%20Registro%20de%20interesados%20V_1_0_0.md)
 
 ## Fase 02: Planificación del Proyecto
-* [01. Transformando a ágil](docs/02%20Planificación/01%20Transformando%20a%20ágil%20V_1_0_0.md)
+* [01. Transformando a ágil](docs/02%20Planificación/01%20Transformando%20a%20ágil%20V_1_1_0.md)
 * [02. Artefactos Jira](docs/02%20Planificación/02%20Artefactos%20Jira%20V_1_0_0.md)
 * [03. Registro de riesgos](docs/02%20Planificación/03%20Registro%20de%20riesgos%20V_1_0_0.md)
 * [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
@@ -306,16 +316,16 @@ Acceso directo a la documentación oficial del repositorio:
 ## Fase 03: Implementación (Sprint 1 y 2)
 
 ### Sprint 1
-* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%201/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_0.md)
-* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%201/02%20Registro%20de%20Impedimentos%20V_1_0_0.md)
-* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/03%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
-* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/04%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%201/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_1.md)
+* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%201/02%20Registro%20de%20Impedimentos%20V_1_0_1.md)
+* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/03%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_1.md)
+* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%201/04%20Retrospectiva%20del%20Sprint%20V_1_0_1.md)
 
 ### Sprint 2
-* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%202/01%20Informe%20de%20estado%20del%20proyecto%20V_2_0_0.md)
-* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%202/02%20Registro%20de%20Impedimentos%20V_2_0_0.md)
-* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/03%20Revisi%C3%B3n%20del%20Sprint%20V_2_0_0.md)
-* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/04%20Retrospectiva%20del%20Sprint%20V_2_0_0.md)
+* [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%202/01%20Informe%20de%20estado%20del%20proyecto%20V_2_0_1.md)
+* [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%202/02%20Registro%20de%20Impedimentos%20V_2_0_1.md)
+* [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/03%20Revisi%C3%B3n%20del%20Sprint%20V_2_0_1.md)
+* [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/04%20Retrospectiva%20del%20Sprint%20V_2_0_1.md)
 
 ---
 <div align="center">

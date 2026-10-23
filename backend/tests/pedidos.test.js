@@ -2,8 +2,15 @@ const request = require('supertest');
 const app = require('../src/app');
 const { PedidoSchema } = require('../src/services/pedidoService');
 const { pool } = require('../src/config/db');
+const { cabeceraSesion } = require('./helpers/sesion');
 
 describe('EP-01 / US-001: Módulo de Gestión y Validación de Pedidos', () => {
+  let auth = {};
+
+  beforeAll(async () => {
+    auth = await cabeceraSesion(app, 'ADMIN');
+  });
+
   afterAll(async () => {
     await pool.end();
   });
@@ -65,7 +72,7 @@ describe('EP-01 / US-001: Módulo de Gestión y Validación de Pedidos', () => {
     });
 
     it('GET /api/v1/pedidos debe listar pedidos existentes en la base de datos', async () => {
-      const res = await request(app).get('/api/v1/pedidos');
+      const res = await request(app).get('/api/v1/pedidos').set(auth);
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -73,7 +80,7 @@ describe('EP-01 / US-001: Módulo de Gestión y Validación de Pedidos', () => {
     });
 
     it('GET /api/v1/pedidos/stats debe devolver métricas agregadas para el motor VRP', async () => {
-      const res = await request(app).get('/api/v1/pedidos/stats');
+      const res = await request(app).get('/api/v1/pedidos/stats').set(auth);
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(res.body.data).toHaveProperty('total_pedidos');
@@ -94,7 +101,7 @@ describe('EP-01 / US-001: Módulo de Gestión y Validación de Pedidos', () => {
         prioridad: 3,
       };
 
-      const res = await request(app).post('/api/v1/pedidos').send(nuevoPedido);
+      const res = await request(app).post('/api/v1/pedidos').set(auth).send(nuevoPedido);
       expect(res.status).toBe(201);
       expect(res.body.ok).toBe(true);
       expect(res.body.data).toHaveProperty('id');
@@ -104,7 +111,7 @@ describe('EP-01 / US-001: Módulo de Gestión y Validación de Pedidos', () => {
     });
 
     it('POST /api/v1/pedidos debe retornar 400 si faltan campos obligatorios', async () => {
-      const res = await request(app).post('/api/v1/pedidos').send({
+      const res = await request(app).post('/api/v1/pedidos').set(auth).send({
         cliente_nombre: 'Sin Direccion',
       });
       expect(res.status).toBe(400);

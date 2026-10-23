@@ -1,8 +1,15 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { pool } = require('../src/config/db');
+const { cabeceraSesion } = require('./helpers/sesion');
 
 describe('Controladores de API (Endpoints y Casos Límite)', () => {
+  let auth = {};
+
+  beforeAll(async () => {
+    auth = await cabeceraSesion(app, 'ADMIN');
+  });
+
   let createdPedidoId = null;
 
   afterAll(async () => {
@@ -11,24 +18,24 @@ describe('Controladores de API (Endpoints y Casos Límite)', () => {
 
   describe('GET /api/v1/geocodificar', () => {
     it('debe devolver 400 si falta el parámetro direccion', async () => {
-      const res = await request(app).get('/api/v1/geocodificar');
+      const res = await request(app).get('/api/v1/geocodificar').set(auth);
       expect(res.status).toBe(400);
       expect(res.body.ok).toBe(false);
       expect(res.body.error).toContain('requerido');
     });
 
     it('debe devolver 200 y datos de geocodificación para direccion válida', async () => {
-      const res = await request(app).get('/api/v1/geocodificar?direccion=Av.+Giraldez+150&distrito=Huancayo+Cercado');
+      const res = await request(app).get('/api/v1/geocodificar?direccion=Av.+Giraldez+150&distrito=Huancayo+Cercado').set(auth);
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(res.body.data.latitud).toBeDefined();
     });
 
     it('GET /api/v1/geocodificar/reversa debe validar lat y lon', async () => {
-      const sinParams = await request(app).get('/api/v1/geocodificar/reversa');
+      const sinParams = await request(app).get('/api/v1/geocodificar/reversa').set(auth);
       expect(sinParams.status).toBe(400);
 
-      const conParams = await request(app).get('/api/v1/geocodificar/reversa?lat=-12.0673&lon=-75.2104');
+      const conParams = await request(app).get('/api/v1/geocodificar/reversa?lat=-12.0673&lon=-75.2104').set(auth);
       expect(conParams.status).toBe(200);
       expect(conParams.body.ok).toBe(true);
     });
@@ -36,7 +43,7 @@ describe('Controladores de API (Endpoints y Casos Límite)', () => {
 
   describe('Endpoints CRUD de Pedidos', () => {
     it('debe listar pedidos filtrando por distrito y estado', async () => {
-      const res = await request(app).get('/api/v1/pedidos?distrito=Huancayo&estado=REGISTRADO&limit=5');
+      const res = await request(app).get('/api/v1/pedidos?distrito=Huancayo&estado=REGISTRADO&limit=5').set(auth);
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -61,36 +68,36 @@ describe('Controladores de API (Endpoints y Casos Límite)', () => {
         observaciones: 'Entregar por puerta 2',
       };
 
-      const resCrear = await request(app).post('/api/v1/pedidos').send(nuevo);
+      const resCrear = await request(app).post('/api/v1/pedidos').set(auth).send(nuevo);
       expect(resCrear.status).toBe(201);
       createdPedidoId = resCrear.body.data.id;
 
-      const resGet = await request(app).get(`/api/v1/pedidos/${createdPedidoId}`);
+      const resGet = await request(app).get(`/api/v1/pedidos/${createdPedidoId}`).set(auth);
       expect(resGet.status).toBe(200);
       expect(resGet.body.data.cliente_nombre).toBe('Comercial Andina SAC');
     });
 
     it('debe devolver 404 para un ID de pedido inexistente', async () => {
-      const res = await request(app).get('/api/v1/pedidos/00000000-0000-0000-0000-000000000000');
+      const res = await request(app).get('/api/v1/pedidos/00000000-0000-0000-0000-000000000000').set(auth);
       expect(res.status).toBe(404);
       expect(res.body.ok).toBe(false);
     });
 
     it('debe cancelar un pedido existente', async () => {
       if (createdPedidoId) {
-        const res = await request(app).patch(`/api/v1/pedidos/${createdPedidoId}/cancelar`);
+        const res = await request(app).patch(`/api/v1/pedidos/${createdPedidoId}/cancelar`).set(auth);
         expect(res.status).toBe(200);
         expect(res.body.data.estado).toBe('CANCELADO');
       }
     });
 
     it('debe devolver 404 al cancelar un pedido inexistente', async () => {
-      const res = await request(app).patch('/api/v1/pedidos/00000000-0000-0000-0000-000000000000/cancelar');
+      const res = await request(app).patch('/api/v1/pedidos/00000000-0000-0000-0000-000000000000/cancelar').set(auth);
       expect(res.status).toBe(404);
     });
 
     it('debe manejar rutas no encontradas (404)', async () => {
-      const res = await request(app).get('/api/v1/ruta-no-existe');
+      const res = await request(app).get('/api/v1/ruta-no-existe').set(auth);
       expect(res.status).toBe(404);
       expect(res.body.ok).toBe(false);
     });

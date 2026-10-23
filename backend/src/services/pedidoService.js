@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { geocodificarDireccion } = require('./geocodingService');
 const { z } = require('zod');
+const { ROLES } = require('../utils/auth');
 
 // Esquema de validación para registro de pedidos
 const PedidoSchema = z.object({
@@ -27,9 +28,19 @@ const PedidoSchema = z.object({
 });
 
 /**
+ * Agrega el filtro de propietario cuando el usuario no es administrador.
+ * El administrador ve el directorio general; el usuario solo sus pedidos.
+ */
+function filtroPropietario(usuario, params, alias = 'p') {
+  if (!usuario || usuario.rol === ROLES.ADMIN) return '';
+  params.push(usuario.id);
+  return ` AND ${alias}.usuario_id = $${params.length}`;
+}
+
+/**
  * Registra un nuevo pedido con geocodificación automática si no se envían coordenadas
  */
-async function crearPedido(datos) {
+async function crearPedido(datos, usuario = null) {
   const validado = PedidoSchema.parse(datos);
 
   let lat = validado.latitud;
@@ -66,9 +77,10 @@ async function crearPedido(datos) {
       tiempo_servicio_min,
       prioridad,
       observaciones,
+      usuario_id,
       estado
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'REGISTRADO'
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'REGISTRADO'
     ) RETURNING *;
   `;
 
@@ -89,6 +101,7 @@ async function crearPedido(datos) {
     validado.tiempo_servicio_min,
     validado.prioridad,
     validado.observaciones || null,
+    usuario ? usuario.id : null,
   ];
 
   const result = await db.query(query, values);
@@ -101,28 +114,32 @@ async function crearPedido(datos) {
 }
 
 /**
- * Obtiene la lista de pedidos con filtros opcionales
+ * Obtiene la lista de pedidos con filtros opcionales, incluyendo quién registró cada pedido
  */
-async function listarPedidos(filtros = {}) {
-  let query = 'SELECT * FROM pedidos WHERE 1=1';
+async function listarPedidos(filtros = {}, usuario = null) {
   const params = [];
-  let paramIndex = 1;
+  let query = `
+    SELECT p.*, u.nombre_completo AS registrado_por
+    FROM pedidos p
+    LEFT JOIN usuarios u ON u.id = p.usuario_id
+    WHERE 1=1`;
+  query += filtroPropietario(usuario, params);
 
   if (filtros.distrito) {
-    query += ` AND distrito ILIKE $${paramIndex++}`;
     params.push(`%${filtros.distrito}%`);
+    query += ` AND p.distrito ILIKE $${params.length}`;
   }
 
   if (filtros.estado) {
-    query += ` AND estado = $${paramIndex++}`;
     params.push(filtros.estado);
+    query += ` AND p.estado = $${params.length}`;
   }
 
-  query += ' ORDER BY created_at DESC';
+  query += ' ORDER BY p.created_at DESC';
 
   if (filtros.limit) {
-    query += ` LIMIT $${paramIndex++}`;
     params.push(parseInt(filtros.limit, 10));
+    query += ` LIMIT $${params.length}`;
   }
 
   const result = await db.query(query, params);
@@ -132,46 +149,50 @@ async function listarPedidos(filtros = {}) {
 /**
  * Obtiene estadísticas generales de los pedidos registrados (insumos para el motor VRP)
  */
-async function obtenerEstadisticasPedidos() {
+async function obtenerEstadisticasPedidos(usuario = null) {
+  const params = [];
   const query = `
     SELECT 
       COUNT(*) AS total_pedidos,
-      COUNT(*) FILTER (WHERE estado = 'REGISTRADO') AS pendientes_planificar,
-      COALESCE(SUM(peso_kg), 0) AS peso_total_kg,
-      COALESCE(SUM(volumen_m3), 0) AS volumen_total_m3,
-      MIN(ventana_inicio) AS primera_ventana,
-      MAX(ventana_fin) AS ultima_ventana
-    FROM pedidos;
+      COUNT(*) FILTER (WHERE p.estado = 'REGISTRADO') AS pendientes_planificar,
+      COALESCE(SUM(p.peso_kg), 0) AS peso_total_kg,
+      COALESCE(SUM(p.volumen_m3), 0) AS volumen_total_m3,
+      MIN(p.ventana_inicio) AS primera_ventana,
+      MAX(p.ventana_fin) AS ultima_ventana
+    FROM pedidos p
+    WHERE p.estado <> 'CANCELADO'${filtroPropietario(usuario, params)};
   `;
 
-  const result = await db.query(query);
+  const result = await db.query(query, params);
   return result.rows[0];
 }
 
 /**
  * Obtiene un pedido por su ID o código de seguimiento
  */
-async function obtenerPedidoPorId(id) {
+async function obtenerPedidoPorId(id, usuario = null) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  const query = isUuid
-    ? 'SELECT * FROM pedidos WHERE id = $1'
-    : 'SELECT * FROM pedidos WHERE codigo_seguimiento = $1';
+  const params = [id];
+  const query = (isUuid
+    ? 'SELECT * FROM pedidos p WHERE p.id = $1'
+    : 'SELECT * FROM pedidos p WHERE p.codigo_seguimiento = $1') + filtroPropietario(usuario, params);
 
-  const result = await db.query(query, [id]);
+  const result = await db.query(query, params);
   return result.rows[0] || null;
 }
 
 /**
  * Elimina o cancela un pedido
  */
-async function cancelarPedido(id) {
+async function cancelarPedido(id, usuario = null) {
+  const params = [id];
   const query = `
-    UPDATE pedidos 
+    UPDATE pedidos p
     SET estado = 'CANCELADO', updated_at = CURRENT_TIMESTAMP 
-    WHERE id = $1 
+    WHERE p.id = $1${filtroPropietario(usuario, params)}
     RETURNING *;
   `;
-  const result = await db.query(query, [id]);
+  const result = await db.query(query, params);
   return result.rows[0] || null;
 }
 

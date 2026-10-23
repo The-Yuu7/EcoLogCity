@@ -1,14 +1,9 @@
 // ==============================================================================
-// EcoLogCity - Lógica del Cliente Frontend Pro (Sprint 1)
+// EcoLogCity - Lógica del Cliente Frontend
 // DistriRápido S.A.C. · Huancayo, Junín
 // ==============================================================================
 
-// Detección dinámica de la URL del API (soporta desarrollo local, servidor unificado Express y nube)
-const API_BASE = window.__API_BASE__ || (
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8000'
-    ? 'http://localhost:8000/api/v1'
-    : '/api/v1'
-);
+// API_BASE, apiFetch y la sesión del usuario vienen de session.js
 
 // Coordenadas base de Huancayo (Cercado y Almacén Central DistriRápido)
 const HUANCAYO_CENTER = [-12.0678, -75.2098];
@@ -21,8 +16,15 @@ let tileLayerOSM = null;
 let tileLayerSat = null;
 let todosLosPedidos = [];
 
+// Sin sesión no se carga el panel: se redirige al inicio de sesión (US-007)
+if (!obtenerSesion()) window.location.replace('login.html');
+
 // Inicialización de la aplicación
 document.addEventListener('DOMContentLoaded', () => {
+  const sesion = obtenerSesion();
+  if (!sesion) return;
+  aplicarPermisosDeRol(sesion.usuario);
+
   initMap();
   cargarEstadisticas();
   cargarPedidos();
@@ -65,12 +67,37 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-cerrar-flota').addEventListener('click', () => modalFlota.classList.add('hidden'));
   document.getElementById('btn-cerrar-flota-footer').addEventListener('click', () => modalFlota.classList.add('hidden'));
 
-  // Botón Demo Express Huancayo
-  document.getElementById('btn-cargar-demo').addEventListener('click', inyectarPedidoDemo);
+  // Registro de vehículos (solo administrador)
+  document.getElementById('form-vehiculo').addEventListener('submit', registrarVehiculo);
+
+  document.getElementById('btn-cerrar-sesion').addEventListener('click', cerrarSesion);
 
   // Exportar a CSV
   document.getElementById('btn-exportar-csv').addEventListener('click', exportarPedidosCSV);
 });
+
+/**
+ * Muestra el usuario en sesión y ajusta la interfaz según su rol:
+ * el ADMIN ve el directorio general, el motor de rutas y la gestión de flota;
+ * el USUARIO ve solo sus pedidos y la flota en modo lectura.
+ */
+function aplicarPermisosDeRol(usuario) {
+  const admin = usuario.rol === 'ADMIN';
+  document.getElementById('sesion-nombre').textContent = usuario.nombre;
+
+  const rolBadge = document.getElementById('sesion-rol');
+  rolBadge.textContent = admin ? 'Admin' : 'Usuario';
+  rolBadge.className += admin
+    ? ' bg-amber-500/20 text-amber-300 border border-amber-500/40'
+    : ' bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+
+  document.querySelectorAll('[data-solo-admin]').forEach(el => el.classList.toggle('hidden', !admin));
+
+  if (admin) {
+    document.getElementById('titulo-directorio').textContent = '📋 Directorio General de Pedidos';
+    document.getElementById('subtitulo-directorio').textContent = 'Pedidos registrados por todos los usuarios, listos para el motor de optimización';
+  }
+}
 
 /**
  * Inicializa el mapa Leaflet centrado en Huancayo con capas y almacén
@@ -202,7 +229,7 @@ async function geocodificarDireccionActual() {
   sugsEl.innerHTML = '';
 
   try {
-    const res = await fetch(`${API_BASE}/geocodificar?direccion=${encodeURIComponent(direccion)}&distrito=${encodeURIComponent(distrito)}`);
+    const res = await apiFetch(`${API_BASE}/geocodificar?direccion=${encodeURIComponent(direccion)}&distrito=${encodeURIComponent(distrito)}`);
     const json = await res.json();
 
     if (!json.ok) {
@@ -296,10 +323,10 @@ async function guardarNuevoPedido(e) {
 
   const btnSubmit = document.getElementById('btn-submit');
   btnSubmit.disabled = true;
-  btnSubmit.innerHTML = '<span>⏳ Guardando en Supabase...</span>';
+  btnSubmit.innerHTML = '<span>⏳ Guardando pedido...</span>';
 
   try {
-    const res = await fetch(`${API_BASE}/pedidos`, {
+    const res = await apiFetch(`${API_BASE}/pedidos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -331,7 +358,7 @@ async function guardarNuevoPedido(e) {
     alert('Error al conectar con la API de EcoLogCity');
   } finally {
     btnSubmit.disabled = false;
-    btnSubmit.innerHTML = '<span>💾 Guardar Pedido en PostgreSQL</span>';
+    btnSubmit.innerHTML = '<span>💾 Guardar Pedido</span>';
   }
 }
 
@@ -340,28 +367,39 @@ async function guardarNuevoPedido(e) {
  */
 async function cargarEstadisticas() {
   try {
-    const res = await fetch(`${API_BASE}/pedidos/stats`);
-    const json = await res.json();
+    const [resStats, resFlota] = await Promise.all([
+      apiFetch(`${API_BASE}/pedidos/stats`),
+      apiFetch(`${API_BASE}/vehiculos`),
+    ]);
+    const json = await resStats.json();
+    const flota = (await resFlota.json()).data || [];
+
     if (json.ok && json.data) {
       const d = json.data;
-      const total = d.total_pedidos || 0;
+      const total = parseInt(d.total_pedidos || 0, 10);
       const pesoTotal = parseFloat(d.peso_total_kg || 0);
 
       document.getElementById('kpi-total').textContent = total;
       document.getElementById('kpi-pendientes').textContent = `${d.pendientes_planificar || 0} pendientes`;
       document.getElementById('kpi-peso').textContent = `${pesoTotal.toFixed(1)} kg`;
 
-      // Barra de ocupación sobre furgón de 1,500 kg
-      const porcentaje = Math.min(100, Math.round((pesoTotal / 1500) * 100));
+      // Ocupación sobre la capacidad total de la flota activa (US-008)
+      const capacidadFlota = flota.reduce((acc, v) => acc + parseFloat(v.capacidad_peso_kg), 0);
+      const porcentaje = capacidadFlota > 0 ? Math.min(100, Math.round((pesoTotal / capacidadFlota) * 100)) : 0;
+      document.getElementById('kpi-capacidad-flota').textContent =
+        `Flota activa: ${flota.length} ${flota.length === 1 ? 'vehículo' : 'vehículos'} (${capacidadFlota.toLocaleString('es-PE')} kg)`;
       document.getElementById('kpi-porcentaje-carga').textContent = `${porcentaje}%`;
       document.getElementById('kpi-progress-bar').style.width = `${porcentaje}%`;
 
       // Estimación Green VRP preliminar (basada en coeficientes de la consigna)
       // Huancayo: ~4.5 km por parada promedio en reparto urbano
-      const distanciaEstKm = Math.max(12, total * 4.5);
-      const co2Kg = (distanciaEstKm * 2.68 * 0.12).toFixed(1); // factor diésel
-      const arboles = Math.max(1, Math.ceil(parseFloat(co2Kg) / 22)); // 1 árbol absorbe ~22 kg CO2/año
-      const costoDiésel = ((distanciaEstKm * 0.12) * 17.50).toFixed(2); // S/ 17.50/galón
+      const consumoGalKm = flota.length > 0
+        ? flota.reduce((acc, v) => acc + parseFloat(v.consumo_gal_km), 0) / flota.length
+        : 0.12; // consumo promedio de la flota activa
+      const distanciaEstKm = total > 0 ? Math.max(12, total * 4.5) : 0;
+      const co2Kg = (distanciaEstKm * 2.68 * consumoGalKm).toFixed(1); // factor diésel
+      const arboles = co2Kg > 0 ? Math.ceil(parseFloat(co2Kg) / 22) : 0; // 1 árbol absorbe ~22 kg CO2/año
+      const costoDiésel = ((distanciaEstKm * consumoGalKm) * 17.50).toFixed(2); // S/ 17.50/galón
       const ahorroSoles = (costoDiésel * 0.15).toFixed(2); // 15% meta
 
       document.getElementById('kpi-co2-base').textContent = `${co2Kg} kg`;
@@ -379,14 +417,14 @@ async function cargarEstadisticas() {
  */
 async function cargarPedidos() {
   const tbody = document.getElementById('pedidos-tbody');
-  tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">Actualizando paradas...</td></tr>';
+  tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-slate-400">Actualizando paradas...</td></tr>`;
 
   try {
-    const res = await fetch(`${API_BASE}/pedidos`);
+    const res = await apiFetch(`${API_BASE}/pedidos`);
     const json = await res.json();
 
     if (!json.ok) {
-      tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-500 font-semibold">Error al cargar pedidos</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-red-500 font-semibold">Error al cargar pedidos</td></tr>`;
       return;
     }
 
@@ -395,7 +433,7 @@ async function cargarPedidos() {
     filtrarYRenderizarTabla();
 
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-red-500">Error de comunicación con el backend</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-red-500">Error de comunicación con el backend</td></tr>`;
   }
 }
 
@@ -445,6 +483,17 @@ function renderizarMarcadoresEnMapa(pedidos) {
   });
 }
 
+// El directorio general del administrador tiene la columna "Registrado por"
+const columnasTabla = () => (esAdmin() ? 10 : 9);
+
+const ESTILOS_ESTADO = {
+  REGISTRADO: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  PLANIFICADO: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+  EN_RUTA: 'bg-sky-50 text-sky-800 border-sky-200',
+  ENTREGADO: 'bg-slate-100 text-slate-700 border-slate-300',
+  CANCELADO: 'bg-red-50 text-red-700 border-red-200',
+};
+
 /**
  * Filtra los pedidos en vivo por texto y distrito y los pinta en la tabla
  */
@@ -465,7 +514,7 @@ function filtrarYRenderizarTabla() {
   document.getElementById('badge-contador-pedidos').textContent = filtrados.length;
 
   if (filtrados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">No se encontraron pedidos con esos filtros.</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-slate-400">No se encontraron pedidos con esos filtros.</td></tr>`;
     return;
   }
 
@@ -476,9 +525,7 @@ function filtrarYRenderizarTabla() {
     tr.className = 'hover:bg-slate-50/80 transition-colors border-b border-slate-100';
 
     // Badge de estado
-    const estadoBadge = p.estado === 'CANCELADO'
-      ? '<span class="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full text-[10px] font-bold">CANCELADO</span>'
-      : '<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">REGISTRADO</span>';
+    const estadoBadge = `<span class="${ESTILOS_ESTADO[p.estado] || ESTILOS_ESTADO.REGISTRADO} border px-2 py-0.5 rounded-full text-[10px] font-bold">${p.estado.replace('_', ' ')}</span>`;
 
     // Badge de prioridad
     let prioridadBadge = '<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">1 Normal</span>';
@@ -496,6 +543,7 @@ function filtrarYRenderizarTabla() {
         <div class="font-bold text-slate-900 text-xs">${p.cliente_nombre}</div>
         <div class="text-[11px] text-slate-400">${p.cliente_telefono || 'Sin teléfono'}</div>
       </td>
+      ${esAdmin() ? `<td class="py-3 px-3.5 text-slate-700">${p.registrado_por || '<span class="text-slate-400 italic">Sin asignar</span>'}</td>` : ''}
       <td class="py-3 px-3.5">
         <div class="text-slate-800 font-medium">${p.direccion_texto}</div>
         <div class="text-[11px] text-emerald-700 font-semibold">${p.distrito}</div>
@@ -587,7 +635,7 @@ window.cancelarPedido = async function (id) {
   if (!confirm('¿Desea cancelar este pedido del despacho diario?')) return;
 
   try {
-    const res = await fetch(`${API_BASE}/pedidos/${id}/cancelar`, { method: 'PATCH' });
+    const res = await apiFetch(`${API_BASE}/pedidos/${id}/cancelar`, { method: 'PATCH' });
     const json = await res.json();
     if (json.ok) {
       cargarEstadisticas();
@@ -601,16 +649,21 @@ window.cancelarPedido = async function (id) {
 };
 
 /**
- * Abre el modal con la flota de vehículos activa (RF-01)
+ * Abre el modal de Gestión de Flota (US-008).
+ * El administrador ve también los vehículos dados de baja y puede registrar o cambiar su estado.
  */
 async function abrirModalFlota() {
-  const modal = document.getElementById('modal-flota');
+  document.getElementById('modal-flota').classList.remove('hidden');
+  await cargarFlota();
+}
+
+async function cargarFlota() {
   const lista = document.getElementById('flota-lista');
-  modal.classList.remove('hidden');
+  const admin = esAdmin();
   lista.innerHTML = '<div class="text-center py-6 text-slate-400 col-span-2">Consultando vehículos de la flota...</div>';
 
   try {
-    const res = await fetch(`${API_BASE}/vehiculos`);
+    const res = await apiFetch(`${API_BASE}/vehiculos${admin ? '?todos=true' : ''}`);
     const json = await res.json();
     const vehiculos = json.data || [];
 
@@ -622,16 +675,27 @@ async function abrirModalFlota() {
     lista.innerHTML = '';
     vehiculos.forEach(v => {
       const card = document.createElement('div');
-      card.className = 'bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-300 transition';
+      card.className = `border rounded-xl p-4 flex flex-col justify-between transition ${v.activo
+        ? 'bg-slate-50 border-slate-200 hover:border-emerald-300'
+        : 'bg-slate-100 border-slate-200 opacity-60'}`;
 
       const tagCombustible = v.tipo_combustible === 'GNV'
         ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">🌱 GNV (Ecológico)</span>'
         : '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">⛽ Diésel</span>';
 
+      const accionAdmin = admin ? `
+        <button class="mt-3 w-full text-[11px] font-semibold px-2.5 py-1.5 rounded-md transition ${v.activo
+          ? 'bg-red-50 hover:bg-red-100 text-red-600'
+          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'}"
+          onclick="cambiarEstadoVehiculo('${v.id}', ${!v.activo})">
+          ${v.activo ? 'Dar de baja' : 'Reactivar'}
+        </button>` : '';
+
       card.innerHTML = `
         <div class="flex justify-between items-start mb-2">
           <div>
             <span class="font-mono text-xs font-bold bg-slate-900 text-white px-2 py-0.5 rounded">${v.placa}</span>
+            ${v.activo ? '' : '<span class="ml-1 text-[10px] font-bold text-slate-500">DE BAJA</span>'}
             <h4 class="font-bold text-slate-900 text-sm mt-1">${v.marca} ${v.modelo}</h4>
           </div>
           ${tagCombustible}
@@ -650,6 +714,7 @@ async function abrirModalFlota() {
             <span class="font-semibold text-slate-800">${v.consumo_gal_km} gal/km</span>
           </div>
         </div>
+        ${accionAdmin}
       `;
       lista.appendChild(card);
     });
@@ -660,61 +725,70 @@ async function abrirModalFlota() {
 }
 
 /**
- * Inserta automáticamente un pedido realista en Huancayo para fines de demostración rápida
+ * Registra un vehículo nuevo en la flota (solo administrador)
  */
-async function inyectarPedidoDemo() {
-  const demos = [
-    {
-      cliente_nombre: 'Restaurante El Huancaino',
-      cliente_telefono: '964998877',
-      distrito: 'Huancayo Cercado',
-      direccion_texto: 'Jr. Puno 340',
-      referencia: 'A media cuadra de la Plaza Huamanmarca',
-      latitud: -12.0691,
-      longitud: -75.2075,
-      ventana_inicio: '09:00',
-      ventana_fin: '11:00',
-      peso_kg: 55.0,
-      volumen_m3: 0.45,
-      prioridad: 4
-    },
-    {
-      cliente_nombre: 'Panadería La Espiga Dorada',
-      cliente_telefono: '954112244',
-      distrito: 'El Tambo',
-      direccion_texto: 'Av. Huancavelica 820',
-      referencia: 'Frente al Parque Bolognesi',
-      latitud: -12.0570,
-      longitud: -75.2160,
-      ventana_inicio: '10:00',
-      ventana_fin: '12:30',
-      peso_kg: 40.0,
-      volumen_m3: 0.30,
-      prioridad: 3
-    }
-  ];
+async function registrarVehiculo(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-guardar-vehiculo');
+  btn.disabled = true;
 
-  const seleccionado = demos[Math.floor(Math.random() * demos.length)];
+  const payload = {
+    placa: document.getElementById('v-placa').value.trim(),
+    marca: document.getElementById('v-marca').value.trim(),
+    modelo: document.getElementById('v-modelo').value.trim(),
+    tipo_vehiculo: document.getElementById('v-tipo').value,
+    capacidad_peso_kg: parseFloat(document.getElementById('v-peso').value),
+    capacidad_volumen_m3: parseFloat(document.getElementById('v-volumen').value),
+    consumo_gal_km: parseFloat(document.getElementById('v-consumo').value),
+    tipo_combustible: document.getElementById('v-combustible').value,
+  };
 
   try {
-    const res = await fetch(`${API_BASE}/pedidos`, {
+    const res = await apiFetch(`${API_BASE}/vehiculos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(seleccionado)
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
-    if (json.ok) {
-      alert(`⚡ ¡Pedido de Demostración generado en Huancayo!\nCliente: ${seleccionado.cliente_nombre}\nCódigo: ${json.data.codigo_seguimiento}`);
-      cargarEstadisticas();
-      cargarPedidos();
-      map.flyTo([seleccionado.latitud, seleccionado.longitud], 16);
-    } else {
-      alert(`No se pudo crear el demo: ${json.error}`);
+    if (!json.ok) {
+      const detalle = json.detalles ? `\n${json.detalles.map(d => `• ${d.mensaje}`).join('\n')}` : '';
+      alert(`No se pudo registrar el vehículo: ${json.error}${detalle}`);
+      return;
     }
+    document.getElementById('form-vehiculo').reset();
+    document.getElementById('v-consumo').value = '0.12';
+    await cargarFlota();
+    cargarEstadisticas();
   } catch (err) {
-    alert('Error al generar pedido de demostración.');
+    alert('Error al registrar el vehículo');
+  } finally {
+    btn.disabled = false;
   }
 }
+
+/**
+ * Da de baja o reactiva un vehículo (solo administrador)
+ */
+window.cambiarEstadoVehiculo = async function (id, activo) {
+  if (!activo && !confirm('¿Dar de baja este vehículo? Dejará de usarse en la optimización de rutas.')) return;
+
+  try {
+    const res = await apiFetch(`${API_BASE}/vehiculos/${id}/estado`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo }),
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      alert(`No se pudo actualizar el vehículo: ${json.error}`);
+      return;
+    }
+    await cargarFlota();
+    cargarEstadisticas();
+  } catch (err) {
+    alert('Error al actualizar el vehículo');
+  }
+};
 
 /**
  * Exporta los pedidos actuales a formato CSV descargable
@@ -768,7 +842,7 @@ window.optimizarRutas = async function () {
   btn.innerHTML = '<span class="animate-pulse">Optimizando...</span>';
 
   try {
-    const res = await fetch(`${API_BASE}/rutas/optimizar`, { method: 'POST' });
+    const res = await apiFetch(`${API_BASE}/rutas/optimizar`, { method: 'POST' });
     const json = await res.json();
 
     if (!json.ok) {
