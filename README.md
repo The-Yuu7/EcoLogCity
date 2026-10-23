@@ -277,6 +277,8 @@ El sistema requiere iniciar sesión en `login.html`. Los datos semilla crean dos
 | Administrador | `admin@ecologcity.pe` | `Admin2026!` | Directorio general de pedidos, optimización de rutas y gestión de flota (registrar, dar de baja, reactivar). |
 | Usuario | `usuario@ecologcity.pe` | `Usuario2026!` | Registra pedidos y ve solo los suyos; consulta la flota activa. |
 
+> La cuenta de administrador también está definida en código (`backend/src/services/authService.js`, `ADMIN_PRUEBA`) para pruebas: permite iniciar sesión aunque la tabla `usuarios` esté vacía. Solo funciona cuando `NODE_ENV` no es `production`.
+
 #### Iniciar Frontend (en otra terminal)
 ```bash
 cd ../frontend

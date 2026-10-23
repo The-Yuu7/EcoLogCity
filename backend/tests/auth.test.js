@@ -49,6 +49,13 @@ describe('US-007: Inicio de sesión y control de acceso por roles', () => {
       expect(res.status).toBe(400);
     });
 
+    it('POST /api/v1/auth/login debe aceptar al administrador de pruebas sin base de datos', async () => {
+      const res = await request(app).post('/api/v1/auth/login').send({ email: 'admin@ecologcity.pe', password: 'Admin2026!' });
+      expect(res.status).toBe(200);
+      expect(res.body.data.usuario.rol).toBe(ROLES.ADMIN);
+      expect(verifyToken(res.body.data.token).rol).toBe(ROLES.ADMIN);
+    });
+
     it('GET /api/v1/pedidos debe responder 401 sin sesión', async () => {
       const res = await request(app).get('/api/v1/pedidos');
       expect(res.status).toBe(401);
