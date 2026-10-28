@@ -167,7 +167,8 @@ EcoLogCity/
 │   ├── 02 Planificación/          # Cronogramas, backlog y EDT/WBS
 │   ├── 03 Implementación/             # Entregables de los Sprints
 │   │   ├── Sprint 1/
-│   │   └── Sprint 2/
+│   │   ├── Sprint 2/
+│   │   └── Sprint 03/                 # (Sprint 3) Revisión, Retrospectiva, SonarQube, OWASP, WCAG
 │   ├── 04 Ejecución/              # Diseños técnicos y especificaciones
 │   ├── 05 Seguimiento y Control/  # Minutas de sprint y métricas QA
 │   ├── 06 Cierre/                 # Informes de entrega de PMV
@@ -315,7 +316,7 @@ Acceso directo a la documentación oficial del repositorio:
 * [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
 
 
-## Fase 03: Implementación (Sprint 1 y 2)
+## Fase 03: Implementación (Sprint 1, 2 y 3)
 
 ### Sprint 1
 * [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%201/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_1.md)
@@ -328,6 +329,13 @@ Acceso directo a la documentación oficial del repositorio:
 * [02. Registro de impedimentos](docs/03%20Implementaci%C3%B3n/Sprint%202/02%20Registro%20de%20Impedimentos%20V_2_0_1.md)
 * [03. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/03%20Revisi%C3%B3n%20del%20Sprint%20V_2_0_1.md)
 * [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/04%20Retrospectiva%20del%20Sprint%20V_2_0_1.md)
+
+### Sprint 3 (Sprint 03)
+* [01. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%2003/01%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+* [02. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%2003/02%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+* [03. Calidad de Código (SonarQube)](docs/03%20Implementaci%C3%B3n/Sprint%2003/03%20Calidad%20de%20c%C3%B3digo%20V_1_0_0.md)
+* [04. Seguridad OWASP Top 10 2025](docs/03%20Implementaci%C3%B3n/Sprint%2003/04%20OWASP%20V_1_0_0.md)
+* [05. Accesibilidad WCAG 2.1/2.2](docs/03%20Implementaci%C3%B3n/Sprint%2003/05%20WCAG%20V_1_0_0.md)
 
 ---
 <div align="center">

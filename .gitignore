@@ -1,9 +1,13 @@
-# Dependencies
+# =============================================================================
+# EcoLogCity .gitignore — Sprint 3 (Ítem 6 y Rúbrica Oficial)
+# =============================================================================
+
+# --- Dependencias de Node.js ---
 node_modules/
 jspm_packages/
 web_drivers/
 
-# Build outputs
+# --- Salidas de Build y Cobertura (Jest / SonarQube) ---
 dist/
 build/
 out/
@@ -12,15 +16,18 @@ backend/coverage/
 .next/
 .nuxt/
 .cache/
+*.lcov
+lcov.info
 
-# Debug logs
+# --- Logs de Debug ---
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log
 
-# Python virtual envs and caches
+# --- Python (entornos virtuales, caches y scripts temporales) ---
 __pycache__/
 *.py[cod]
 *$py.class
@@ -32,30 +39,33 @@ pip-log.txt
 pip-delete-this-directory.txt
 .tox/
 .coverage
-.cache
 nosetests.xml
 coverage.xml
 *.cover
-*.log
 .pytest_cache/
 .mypy_cache/
 .poetry/
+*.py
 
-# Operating System files
+# --- Sistema Operativo y Archivos Temporales ---
 .DS_Store
 Thumbs.db
 desktop.ini
+*.tmp
+*.bak
+*.swp
+*.sw?
+*~
 
-# IDEs and Editors
+# --- IDEs y Editores ---
 .idea/
 .vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 
-# Local environment variables
+# --- Variables de Entorno (Credenciales y Secretos) ---
 .env
 .env.local
 .env.development.local
@@ -63,6 +73,18 @@ desktop.ini
 .env.production.local
 *.env
 
-# Custom exclusions
+# --- Archivos temporales y de backup de Git ---
+*.gitignore~
+.gitignore.bak
+*.orig
+
+# --- Archivos de Consigna / Guías de Estudio / Documentos de Evaluación ---
+# (Excluidos del repositorio oficial según rúbrica e instrucciones del curso)
+Consigna*.html
+Guia*.html
+Rubrica*.html
+*.docx
+
+# --- Base de Datos Local ---
 /db_data/
 /pgdata/
