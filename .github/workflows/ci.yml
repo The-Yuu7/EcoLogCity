@@ -45,7 +45,9 @@ jobs:
       - name: Inicializar Esquema de Base de Datos y Seeds
         run: |
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/001_init_postgis_schema.sql
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/002_usuarios_roles.sql
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/001_seed_pedidos_huancayo.sql
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/002_seed_usuarios.sql
 
       - name: Ejecutar Pruebas Automatizadas con Cobertura (DoD >= 80%)
         env:
@@ -56,6 +58,7 @@ jobs:
           DB_NAME: ecologcity_db
           DB_USER: postgres
           DB_PASSWORD: postgrespassword
+          JWT_SECRET: dev-secret-ecologcity-2026-jwt-key
         run: |
           cd backend
           npm run test:coverage
