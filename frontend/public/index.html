@@ -4,45 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EcoLogCity | Plataforma de Logística Sostenible y VRPTW - Huancayo</title>
-  
-  <!-- Tipografía Google Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS + sistema de diseño de EcoLogCity -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          colors: {
-            brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              200: '#a7f3d0',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="theme.css" />
 
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    #map { height: 530px; width: 100%; border-radius: 0.75rem; z-index: 10; }
+    #map { height: 560px; background: #F0F2F5; width: 100%; border-radius: 20px; z-index: 10; }
     .custom-pulse-pin {
       position: relative;
     }
@@ -53,81 +26,81 @@
       height: 100%;
       top: 0;
       left: 0;
-      background: rgba(239, 68, 68, 0.4);
+      background: rgba(223, 73, 39, 0.35);
       border-radius: 50%;
       animation: pin-pulse 1.8s infinite;
       z-index: -1;
     }
-    .item-menu { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.625rem; font-weight: 600; color: #cbd5e1; text-align: left; transition: background-color .15s, color .15s; }
-    .item-menu:hover { background-color: rgba(51, 65, 85, 0.6); color: #ffffff; }
-    .item-menu[aria-current="page"] { background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7; box-shadow: inset 3px 0 0 #10b981; }
     @keyframes pin-pulse {
       0% { transform: scale(1); opacity: 0.8; }
       100% { transform: scale(2.4); opacity: 0; }
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-100 text-slate-900 font-sans min-h-screen flex antialiased selection:bg-emerald-500 selection:text-white">
 
-  <!-- Top Navigation Bar -->
-  <header class="bg-slate-900 text-white border-b border-emerald-500/20 sticky top-0 z-50 shadow-lg">
-    <div class="px-4 py-3 flex justify-between items-center gap-4 h-16">
+  <!-- Fondo del menú en pantallas pequeñas -->
+  <div id="menu-fondo" class="hidden fixed inset-0 bg-slate-900/40 z-30 lg:hidden"></div>
 
-      <!-- Brand & Context -->
-      <div class="flex items-center space-x-3.5 min-w-0">
-        <button id="btn-menu" class="lg:hidden text-slate-300 hover:text-white p-1.5 -ml-1.5 rounded-lg hover:bg-slate-800 transition"
-          aria-label="Abrir menú" aria-controls="menu-lateral" aria-expanded="false">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <div class="h-10 w-10 bg-gradient-to-tr from-emerald-600 to-teal-400 text-slate-900 font-extrabold flex items-center justify-center rounded-xl shadow-md text-xl ring-2 ring-emerald-400/40">
-          🌱
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-white">EcoLogCity</h1>
-          <p class="text-xs text-slate-400 hidden md:block truncate">
-            DistriRápido S.A.C. · Optimizador de Rutas Sostenibles en Altitud (Huancayo, 3,250 msnm)
-          </p>
-        </div>
-      </div>
-
-      <!-- Acciones y Sesión -->
-      <div class="flex items-center flex-wrap gap-2 text-xs">
-        <!-- Usuario en sesión (US-007) -->
-        <div class="flex items-center gap-2 bg-slate-800/80 pl-3 pr-1 py-1 rounded-lg border border-slate-700/80">
-          <span id="sesion-nombre" class="text-slate-200 font-medium">--</span>
-          <span id="sesion-rol" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"></span>
-          <button id="btn-cerrar-sesion" class="text-slate-400 hover:text-white hover:bg-slate-700 px-2 py-0.5 rounded transition" title="Cerrar sesión">
-            Salir
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </header>
-
-  <div class="flex flex-1">
-
-  <!-- Fondo oscuro del menú en pantallas pequeñas -->
-  <div id="menu-fondo" class="hidden fixed inset-0 top-16 bg-slate-900/50 z-30 lg:hidden"></div>
-
-  <!-- Menú lateral de módulos -->
+  <!-- Riel lateral de módulos -->
   <aside id="menu-lateral"
-    class="fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col
+    class="fixed lg:sticky top-0 left-0 z-40 h-screen w-20 shrink-0 bg-white flex flex-col items-center py-5
            -translate-x-full lg:translate-x-0 transition-transform duration-200">
-    <nav class="flex-1 p-3 space-y-1 text-sm" aria-label="Módulos de EcoLogCity">
-      <p class="px-3.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Módulos</p>
-      <button data-modulo="dashboard" class="item-menu"><span aria-hidden="true">📊</span> Dashboard</button>
-      <button data-modulo="pedidos" class="item-menu"><span aria-hidden="true">📦</span> Pedidos y Rutas</button>
-      <button data-modulo="flota" class="item-menu"><span aria-hidden="true">🚚</span> Gestión de Flota</button>
-      <button data-modulo="usuarios" data-solo-admin class="item-menu hidden"><span aria-hidden="true">👥</span> Usuarios</button>
+    <div class="h-11 w-11 rounded-full bg-slate-100 flex items-center justify-center text-slate-900" title="EcoLogCity">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+    </div>
+
+    <nav class="flex-1 flex flex-col items-center gap-3 mt-12" aria-label="Módulos de EcoLogCity">
+      <button data-modulo="dashboard" class="item-rail" aria-label="Dashboard">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+        <span class="etiqueta-rail">Dashboard</span>
+      </button>
+      <button data-modulo="pedidos" class="item-rail" aria-label="Pedidos y Rutas">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 21a2 2 0 100-4 2 2 0 000 4zM18 7a2 2 0 100-4 2 2 0 000 4zM6 17V10a4 4 0 014-4h4M18 7v7a4 4 0 01-4 4h-4"/></svg>
+        <span class="etiqueta-rail">Pedidos y Rutas</span>
+      </button>
+      <button data-modulo="flota" class="item-rail" aria-label="Gestión de Flota">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+        <span class="etiqueta-rail">Gestión de Flota</span>
+      </button>
+      <button data-modulo="usuarios" data-solo-admin class="item-rail hidden" aria-label="Usuarios">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.13a4 4 0 010 7.75M22 21v-1a6 6 0 00-4-5.65"/></svg>
+        <span class="etiqueta-rail">Usuarios</span>
+      </button>
     </nav>
-    <p class="p-4 text-[11px] text-slate-500 border-t border-slate-800">Huancayo · 3,250 msnm</p>
+
+    <button id="btn-cerrar-sesion" class="item-rail" aria-label="Cerrar sesión">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>
+      <span class="etiqueta-rail">Cerrar sesión</span>
+    </button>
   </aside>
 
   <div class="flex-1 min-w-0 flex flex-col">
 
+  <!-- Barra superior: título del módulo y usuario en sesión -->
+  <header class="px-4 lg:px-8 pt-6 pb-2 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <button id="btn-menu" class="lg:hidden boton-icono bg-white" aria-label="Abrir menú" aria-controls="menu-lateral" aria-expanded="false">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="min-w-0">
+        <h1 id="titulo-modulo" class="text-2xl lg:text-[28px] font-medium tracking-tight text-slate-900 truncate">Dashboard</h1>
+        <p class="text-xs text-slate-500 hidden md:block truncate">EcoLogCity · DistriRápido S.A.C. · Huancayo, 3,250 msnm</p>
+      </div>
+    </div>
+
+    <!-- Usuario en sesión (US-007) -->
+    <div class="flex items-center gap-3 bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-sm shrink-0">
+      <div class="text-right leading-tight hidden sm:block">
+        <div id="sesion-nombre" class="text-sm font-medium text-slate-900">--</div>
+        <div class="text-[11px] text-slate-500">Sesión activa</div>
+      </div>
+      <span id="sesion-rol" class="pastilla"></span>
+    </div>
+  </header>
+
   <!-- Main Workspace Container -->
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+  <main class="px-4 lg:px-8 py-4 flex-1 w-full max-w-[1400px] space-y-6">
 
     <!-- Módulo Dashboard (US-006) -->
     <section id="modulo-dashboard" data-modulo-panel class="hidden space-y-6" role="tabpanel">
@@ -135,13 +108,13 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       
       <!-- KPI 1: Pedidos Totales -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 hover:border-emerald-300 transition group">
+      <div class="bg-white p-4 rounded-xl shadow-sm hover:border-emerald-300 transition group">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pedidos Registrados</span>
-          <span class="text-base p-1.5 bg-slate-100 rounded-lg group-hover:bg-emerald-50 transition">📦</span>
+          <span class="text-xs font-medium text-slate-400">Pedidos Registrados</span>
+          <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg></span>
         </div>
         <div class="flex items-baseline gap-2 mt-1.5">
-          <div id="kpi-total" class="text-2xl font-bold text-slate-900">--</div>
+          <div id="kpi-total" class="text-2xl font-medium text-slate-900">--</div>
           <span class="text-xs text-slate-500">en Huancayo</span>
         </div>
         <div class="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
@@ -151,13 +124,13 @@
       </div>
 
       <!-- KPI 2: Carga y Ocupación -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 hover:border-emerald-300 transition group">
+      <div class="bg-white p-4 rounded-xl shadow-sm hover:border-emerald-300 transition group">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Carga Acumulada</span>
-          <span class="text-base p-1.5 bg-slate-100 rounded-lg group-hover:bg-emerald-50 transition">⚖️</span>
+          <span class="text-xs font-medium text-slate-400">Carga Acumulada</span>
+          <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 006 0L7 7zM17 7l-3 7a3 3 0 006 0l-3-7z"/></svg></span>
         </div>
         <div class="flex items-baseline gap-2 mt-1.5">
-          <div id="kpi-peso" class="text-2xl font-bold text-slate-900">-- kg</div>
+          <div id="kpi-peso" class="text-2xl font-medium text-slate-900">-- kg</div>
         </div>
         <!-- Progress Gauge -->
         <div class="mt-2">
@@ -166,40 +139,40 @@
             <span id="kpi-porcentaje-carga">0%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-            <div id="kpi-progress-bar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div id="kpi-progress-bar" class="bg-slate-900 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
         </div>
       </div>
 
       <!-- KPI 3: Indicador Ecológico Proyectado (Green VRP) -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 hover:border-emerald-300 transition group">
+      <div class="bg-white p-4 rounded-xl shadow-sm hover:border-emerald-300 transition group">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Emisión Diésel Base</span>
-          <span class="text-base p-1.5 bg-slate-100 rounded-lg group-hover:bg-emerald-50 transition">🌲</span>
+          <span class="text-xs font-medium text-slate-400">Emisión Diésel Base</span>
+          <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15M5 19l7-7"/></svg></span>
         </div>
         <div class="flex items-baseline gap-2 mt-1.5">
-          <div id="kpi-co2-base" class="text-2xl font-bold text-slate-900">-- kg</div>
+          <div id="kpi-co2-base" class="text-2xl font-medium text-slate-900">-- kg</div>
           <span class="text-xs text-slate-500">CO₂ estimado</span>
         </div>
         <div class="text-[11px] text-teal-700 font-medium mt-1 flex items-center gap-1">
-          <span>🌳 Equivale a</span>
-          <span id="kpi-arboles" class="font-bold">--</span>
+          <span>Equivale a</span>
+          <span id="kpi-arboles" class="font-medium">--</span>
           <span>árboles para compensar</span>
         </div>
       </div>
 
       <!-- KPI 4: Costo Operativo y Ahorro Estimado -->
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/80 hover:border-emerald-300 transition group">
+      <div class="bg-white p-4 rounded-xl shadow-sm hover:border-emerald-300 transition group">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto Estimado Flota</span>
-          <span class="text-base p-1.5 bg-slate-100 rounded-lg group-hover:bg-emerald-50 transition">💰</span>
+          <span class="text-xs font-medium text-slate-400">Gasto Estimado Flota</span>
+          <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM14.5 9A2.5 2 0 0012 8h-.5a2 2 0 000 4h1a2 2 0 010 4H12a2.5 2 0 01-2.5-1M12 6.5V8M12 16v1.5"/></svg></span>
         </div>
         <div class="flex items-baseline gap-2 mt-1.5">
-          <div id="kpi-costo-combustible" class="text-2xl font-bold text-slate-900">S/ --</div>
+          <div id="kpi-costo-combustible" class="text-2xl font-medium text-slate-900">S/ --</div>
           <span class="text-[11px] text-slate-500">(Diésel S/ 17.50/gal)</span>
         </div>
-        <div class="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-          <span>📉 Ahorro meta:</span>
+        <div class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+          <span>Ahorro meta:</span>
           <span id="kpi-ahorro-soles">~S/ -- (15%)</span>
         </div>
       </div>
@@ -208,16 +181,16 @@
 
     <!-- Resúmenes del dashboard (US-006) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <h3 class="text-sm font-bold text-slate-900">Pedidos por estado</h3>
+      <div class="bg-white p-5 rounded-2xl shadow-sm">
+        <h3 class="text-sm font-medium text-slate-900">Pedidos por estado</h3>
         <div id="resumen-estados" class="mt-4 space-y-3 text-xs"></div>
       </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <h3 class="text-sm font-bold text-slate-900">Pedidos por distrito</h3>
+      <div class="bg-white p-5 rounded-2xl shadow-sm">
+        <h3 class="text-sm font-medium text-slate-900">Pedidos por distrito</h3>
         <div id="resumen-distritos" class="mt-4 space-y-3 text-xs"></div>
       </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <h3 class="text-sm font-bold text-slate-900">Flota activa</h3>
+      <div class="bg-white p-5 rounded-2xl shadow-sm">
+        <h3 class="text-sm font-medium text-slate-900">Flota activa</h3>
         <dl id="resumen-flota" class="mt-4 space-y-2.5 text-xs"></dl>
       </div>
     </div>
@@ -226,30 +199,30 @@
     <!-- Módulo Pedidos y Rutas (US-001 a US-005, US-009) -->
     <section id="modulo-pedidos" data-modulo-panel class="hidden space-y-6" role="tabpanel">
     <!-- Motor de Optimización de Rutas (US-003) - Solo Administrador -->
-    <div data-solo-admin class="hidden bg-gradient-to-r from-indigo-50 to-white p-6 rounded-2xl shadow-sm border border-indigo-200 mb-6 flex justify-between items-center">
+    <div data-solo-admin class="hidden bg-slate-900 p-6 rounded-2xl shadow-sm flex flex-wrap gap-4 justify-between items-center">
         <div>
-            <h2 class="text-xl font-bold text-indigo-900">🚀 Motor de Optimización de Rutas</h2>
-            <p class="text-sm text-indigo-700 mt-1">Habilita la optimización inteligente: Agrupa pedidos por peso/volumen y calcula las rutas más eficientes usando OSRM.</p>
+            <h2 class="text-xl font-medium text-white">Motor de Optimización de Rutas</h2>
+            <p class="text-sm text-slate-300 mt-1">Agrupa los pedidos por peso y volumen, respeta las ventanas horarias y traza las rutas más eficientes con OSRM.</p>
         </div>
-        <button id="btn-optimizar" onclick="optimizarRutas()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg flex items-center gap-2 transition transform hover:scale-105">
+        <button id="btn-optimizar" onclick="optimizarRutas()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-7 rounded-full flex items-center gap-2 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Optimizar Rutas (Green VRP)
+            Optimizar rutas
         </button>
     </div>
     
     <!-- Modal Resumen VRP (Hidden by default) -->
     <div id="vrp-modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1000]">
         <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-indigo-100">
-            <h3 class="text-xl font-bold text-indigo-800 mb-4 border-b pb-3 flex items-center gap-2">
+            <h3 class="text-xl font-medium text-indigo-800 mb-4 border-b pb-3 flex items-center gap-2">
                 <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Reporte Green VRP
             </h3>
             <div class="space-y-3 text-sm text-slate-700">
-                <div class="flex justify-between items-center bg-slate-50 p-2 rounded"><strong>Distancia Recorrida:</strong> <span id="vrp-dist" class="font-mono text-indigo-600 font-bold"></span> km</div>
-                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Ahorro Logístico:</strong> <span id="vrp-ahorro" class="font-mono font-bold"></span> km</div>
-                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Emisiones Evitadas:</strong> <span id="vrp-co2" class="font-mono font-bold"></span> kg CO2</div>
-                <div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-700 mt-4 border-t pt-2"><strong>Pedidos Asignados:</strong> <span id="vrp-asignados" class="font-mono font-bold"></span></div>
-                <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-700"><strong>Sin Asignar:</strong> <span id="vrp-noasignados" class="font-mono font-bold"></span></div>
+                <div class="flex justify-between items-center bg-slate-50 p-2 rounded"><strong>Distancia Recorrida:</strong> <span id="vrp-dist" class="font-mono text-indigo-600 font-medium"></span> km</div>
+                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Ahorro Logístico:</strong> <span id="vrp-ahorro" class="font-mono font-medium"></span> km</div>
+                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Emisiones Evitadas:</strong> <span id="vrp-co2" class="font-mono font-medium"></span> kg CO2</div>
+                <div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-700 mt-4 border-t pt-2"><strong>Pedidos Asignados:</strong> <span id="vrp-asignados" class="font-mono font-medium"></span></div>
+                <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-700"><strong>Sin Asignar:</strong> <span id="vrp-noasignados" class="font-mono font-medium"></span></div>
             </div>
             <div class="mt-6 flex justify-end">
                 <button onclick="document.getElementById('vrp-modal').classList.add('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-md">Cerrar y Ver Mapa</button>
@@ -261,16 +234,16 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- Formulario de Registro (5 Cols) -->
-      <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+      <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
             <div>
-              <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span>📝 Registrar Nuevo Pedido</span>
+              <h2 class="text-base font-medium text-slate-900 flex items-center gap-2">
+                <span>Registrar nuevo pedido</span>
               </h2>
               <p class="text-xs text-slate-500 mt-0.5">Ingreso de paradas con geocodificación automática (US-001)</p>
             </div>
-            <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold">
+            <span class="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-mono font-medium">
               EP-01
             </span>
           </div>
@@ -279,12 +252,12 @@
             <!-- Datos del Cliente -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente / Bodega *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Cliente / Bodega *</label>
                 <input type="text" id="cliente_nombre" required placeholder="Ej: Bodega San Martín"
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono Contacto</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Teléfono Contacto</label>
                 <input type="tel" id="cliente_telefono" placeholder="964112233"
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
               </div>
@@ -293,7 +266,7 @@
             <!-- Distrito y Dirección -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div class="md:col-span-1">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Distrito *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Distrito *</label>
                 <select id="distrito" required
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none bg-white font-medium">
                   <option value="Huancayo Cercado">Huancayo Cercado</option>
@@ -304,14 +277,14 @@
                 </select>
               </div>
               <div class="md:col-span-2">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Dirección Textual *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Dirección Textual *</label>
                 <div class="flex gap-1.5">
                   <input type="text" id="direccion_texto" required placeholder="Ej: Av. Giráldez 150"
                     class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
                   <button type="button" id="btn-geocodificar"
-                    class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-lg font-semibold transition flex items-center gap-1 whitespace-nowrap shadow-sm">
-                    <span id="spinner-geo" class="hidden animate-spin">⌛</span>
-                    <span>🔍 Ubicar</span>
+                    class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center gap-1 whitespace-nowrap shadow-sm">
+                    <span id="spinner-geo" class="hidden w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
+                    <span>Ubicar</span>
                   </button>
                 </div>
               </div>
@@ -319,7 +292,7 @@
 
             <!-- Punto de Referencia (Adaptación Realidad Local) -->
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Punto de Referencia (Opcional)</label>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Punto de Referencia (Opcional)</label>
               <input type="text" id="referencia" placeholder="Ej: Frente al Mercado Modelo, junto a la farmacia"
                 class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition" />
             </div>
@@ -331,29 +304,29 @@
             <!-- Coordenadas Georreferenciadas -->
             <div class="grid grid-cols-2 gap-3 bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
               <div>
-                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Latitud GPS</label>
+                <label class="block text-[11px] font-medium text-slate-500 mb-0.5">Latitud GPS</label>
                 <input type="number" step="0.000001" id="latitud" readonly
-                  class="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded font-mono text-slate-700 font-semibold" />
+                  class="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded font-mono text-slate-700 font-medium" />
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Longitud GPS</label>
+                <label class="block text-[11px] font-medium text-slate-500 mb-0.5">Longitud GPS</label>
                 <input type="number" step="0.000001" id="longitud" readonly
-                  class="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded font-mono text-slate-700 font-semibold" />
+                  class="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded font-mono text-slate-700 font-medium" />
               </div>
               <p class="col-span-2 text-[11px] text-slate-500 italic flex items-center gap-1">
-                <span>📍 Arrastra el marcador rojo en el mapa para ajustar las coordenadas manualmente.</span>
+                <span>Arrastra el marcador rojo en el mapa para ajustar las coordenadas manualmente.</span>
               </p>
             </div>
 
             <!-- Ventana Horaria de Entrega (VRPTW) -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Ventana Inicio (Hora) *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Ventana Inicio (Hora) *</label>
                 <input type="time" id="ventana_inicio" value="08:30" required
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Ventana Fin (Hora) *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Ventana Fin (Hora) *</label>
                 <input type="time" id="ventana_fin" value="11:30" required
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono" />
               </div>
@@ -362,17 +335,17 @@
             <!-- Carga y Prioridad -->
             <div class="grid grid-cols-3 gap-3">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Peso (kg) *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Peso (kg) *</label>
                 <input type="number" step="0.1" min="0.1" id="peso_kg" value="25.0" required
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Volumen (m³) *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Volumen (m³) *</label>
                 <input type="number" step="0.01" min="0.01" id="volumen_m3" value="0.20" required
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono" />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Prioridad *</label>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Prioridad *</label>
                 <select id="prioridad"
                   class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium">
                   <option value="1">1 - Baja</option>
@@ -386,67 +359,55 @@
 
             <!-- Botón de Envío -->
             <button type="submit" id="btn-submit"
-              class="w-full mt-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-2.5 rounded-xl shadow-sm transition flex items-center justify-center gap-2">
-              <span>💾 Guardar Pedido</span>
+              class="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 rounded-full transition flex items-center justify-center gap-2">
+              <span>Guardar pedido</span>
             </button>
           </form>
         </div>
       </div>
 
       <!-- Visor de Mapa de Huancayo (7 Cols) -->
-      <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
+      <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-between">
         <div>
           <!-- Controles Superiores del Mapa -->
           <div class="flex flex-wrap justify-between items-center pb-3.5 mb-3 border-b border-slate-100 gap-2">
             <div>
-              <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span>🗺️ Visor Geográfico de Entregas</span>
+              <h2 class="text-base font-medium text-slate-900 flex items-center gap-2">
+                <span>Visor de entregas</span>
               </h2>
               <p class="text-xs text-slate-500">Mapeo espacial de paradas en el Valle del Mantaro (Huancayo)</p>
             </div>
             
             <div class="flex items-center gap-1.5">
-              <button id="btn-capa-calles" class="text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-lg font-semibold transition">
-                Calles OSM
+              <button id="btn-capa-calles" class="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium transition">
+                Mapa
               </button>
-              <button id="btn-capa-satelite" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition">
+              <button id="btn-capa-satelite" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full font-medium transition">
                 Satélite
               </button>
-              <button id="btn-centrar-huancayo" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition flex items-center gap-1">
-                <span>🎯</span>
+              <button id="btn-centrar-huancayo" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full font-medium transition flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 3v4M12 17v4M3 12h4M17 12h4"/></svg>
                 <span>Centrar</span>
               </button>
             </div>
           </div>
 
           <!-- Contenedor del Mapa Leaflet -->
-          <div id="map" class="shadow-inner border border-slate-200"></div>
+          <div class="relative">
+            <div id="map"></div>
+            <!-- Detalle del pedido seleccionado (se llena desde app.js) -->
+            <div id="tarjeta-pedido-mapa" class="hidden absolute left-3 right-3 bottom-3 z-[500] bg-white rounded-2xl p-4"></div>
+          </div>
 
           <!-- Leyenda de Marcadores -->
-          <div class="mt-3.5 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-3 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
-            <div class="flex items-center flex-wrap gap-3">
-              <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-blue-600 inline-block ring-2 ring-blue-300"></span>
-                <span class="font-medium text-slate-700">Base Central DistriRápido</span>
-              </span>
-              <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>
-                <span>Pedidos Estándar</span>
-              </span>
-              <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-                <span>Prioridad Alta</span>
-              </span>
-              <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-red-600 inline-block"></span>
-                <span>Prioridad Crítica</span>
-              </span>
-              <span class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-red-400 inline-block animate-ping"></span>
-                <span class="font-medium text-slate-800">Punto a Registrar</span>
-              </span>
+          <div class="mt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-3">
+            <div class="flex items-center flex-wrap gap-4">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#242E42"></span>Almacén / prioridad normal</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#78A6D2"></span>Prioridad media</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#DF4927"></span>Prioridad alta</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background:#B42318"></span>Prioridad crítica</span>
             </div>
-            <div class="text-[11px] font-mono text-slate-400">Huancayo: 3,250 msnm</div>
+            <div class="text-[11px] text-slate-400">Huancayo · 3,250 msnm</div>
           </div>
         </div>
       </div>
@@ -455,14 +416,14 @@
 
     
     <!-- Data Grid: Tabla de Pedidos Registrados -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+    <div class="bg-white p-6 rounded-2xl shadow-sm">
       
       <!-- Toolbar: Búsqueda, Filtros y Actualización -->
       <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-slate-100 gap-3">
         <div>
-          <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <span id="titulo-directorio">📋 Mis Pedidos Registrados</span>
-            <span id="badge-contador-pedidos" class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-semibold">0</span>
+          <h2 class="text-base font-medium text-slate-900 flex items-center gap-2">
+            <span id="titulo-directorio">Mis pedidos registrados</span>
+            <span id="badge-contador-pedidos" class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-medium">0</span>
           </h2>
           <p id="subtitulo-directorio" class="text-xs text-slate-500 mt-0.5">Pedidos que usted registró, geocodificados y listos para planificar</p>
         </div>
@@ -472,7 +433,7 @@
           <div class="relative">
             <input type="text" id="input-buscar" placeholder="Buscar cliente o dirección..."
               class="px-3 py-1.5 pl-8 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none w-48 lg:w-64 transition" />
-            <span class="absolute left-2.5 top-2 text-xs text-slate-400">🔍</span>
+            <span class="absolute left-3 top-2 text-slate-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4"/></svg></span>
           </div>
 
           <!-- Filtro por Distrito -->
@@ -486,13 +447,13 @@
             <option value="San Agustín de Cajas">San Agustín de Cajas</option>
           </select>
 
-          <button id="btn-exportar-csv" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold transition" title="Exportar pedidos a CSV">
-            📥 CSV
+          <button id="btn-exportar-csv" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition" title="Exportar pedidos a CSV">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> CSV
           </button>
 
           <!-- Botón Refrescar -->
-          <button id="btn-refrescar" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition">
-            <span>🔄</span>
+          <button id="btn-refrescar" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 0114-5.3L20 9M20 4v5h-5M20 12a8 8 0 01-14 5.3L4 15M4 20v-5h5"/></svg>
             <span>Refrescar</span>
           </button>
         </div>
@@ -501,7 +462,7 @@
       <!-- Tabla de Datos -->
       <div class="overflow-x-auto rounded-xl border border-slate-100">
         <table class="w-full text-left text-xs text-slate-600">
-          <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+          <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
             <tr>
               <th class="py-3 px-3.5">Código</th>
               <th class="py-3 px-3.5">Cliente</th>
@@ -529,12 +490,11 @@
     <!-- Módulo Gestión de Flota (US-008) -->
     <section id="modulo-flota" data-modulo-panel class="hidden space-y-5" role="tabpanel">
       <div>
-        <h2 class="text-base font-bold text-slate-900">🚚 Gestión de Flota</h2>
         <p class="text-xs text-slate-500 mt-0.5">Capacidades de peso, volumen y tipo de combustible que usa el motor de rutas (solo vehículos activos).</p>
       </div>
         <!-- Registro de vehículo: solo Administrador -->
-        <form id="form-vehiculo" data-solo-admin class="hidden bg-white shadow-sm border border-slate-200/80 rounded-2xl p-5 space-y-3">
-          <h4 class="text-sm font-bold text-slate-900">➕ Registrar vehículo</h4>
+        <form id="form-vehiculo" data-solo-admin class="hidden bg-white shadow-sm rounded-2xl p-5 space-y-3">
+          <h4 class="text-sm font-medium text-slate-900">Registrar vehículo</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <input id="v-placa" required maxlength="10" placeholder="Placa (W2X-780)" class="px-3 py-2 border border-slate-300 rounded-lg font-mono uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
             <input id="v-marca" required placeholder="Marca" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
@@ -553,7 +513,7 @@
             </select>
           </div>
           <div class="flex justify-end">
-            <button type="submit" id="btn-guardar-vehiculo" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-semibold transition">Guardar vehículo</button>
+            <button type="submit" id="btn-guardar-vehiculo" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-5 py-2.5 rounded-full font-medium transition">Guardar vehículo</button>
           </div>
         </form>
 
@@ -564,43 +524,43 @@
 
     <!-- Módulo Usuarios (US-010) - Solo Administrador -->
     <section id="modulo-usuarios" data-modulo-panel class="hidden space-y-6" role="tabpanel">
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+      <div class="bg-white p-6 rounded-2xl shadow-sm">
         <div class="pb-3.5 border-b border-slate-100">
-          <h2 class="text-base font-bold text-slate-900">➕ Registrar usuario</h2>
+          <h2 class="text-base font-medium text-slate-900">Registrar usuario</h2>
           <p class="text-xs text-slate-500 mt-0.5">El usuario podrá registrar pedidos y verá solo los suyos; el administrador tiene acceso a todos los módulos.</p>
         </div>
         <form id="form-usuario" class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 text-xs items-end">
           <div class="md:col-span-1">
-            <label for="u-nombre" class="block font-semibold text-slate-700 mb-1">Nombre completo *</label>
+            <label for="u-nombre" class="block font-medium text-slate-700 mb-1">Nombre completo *</label>
             <input id="u-nombre" required minlength="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
           <div class="md:col-span-1">
-            <label for="u-email" class="block font-semibold text-slate-700 mb-1">Correo *</label>
+            <label for="u-email" class="block font-medium text-slate-700 mb-1">Correo *</label>
             <input id="u-email" type="email" required autocomplete="off" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
           <div class="md:col-span-1">
-            <label for="u-password" class="block font-semibold text-slate-700 mb-1">Contraseña * (mín. 8)</label>
+            <label for="u-password" class="block font-medium text-slate-700 mb-1">Contraseña * (mín. 8)</label>
             <div class="relative">
               <input id="u-password" type="password" required minlength="8" autocomplete="new-password" class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
               <button type="button" data-visor-para="u-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700 transition" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"></button>
             </div>
           </div>
           <div class="md:col-span-1">
-            <label for="u-rol" class="block font-semibold text-slate-700 mb-1">Rol</label>
+            <label for="u-rol" class="block font-medium text-slate-700 mb-1">Rol</label>
             <select id="u-rol" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
               <option value="USUARIO">Usuario</option>
               <option value="ADMIN">Administrador</option>
             </select>
           </div>
-          <button type="submit" id="btn-guardar-usuario" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">Guardar usuario</button>
+          <button type="submit" id="btn-guardar-usuario" class="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-full font-medium transition">Guardar usuario</button>
         </form>
       </div>
 
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
-        <h2 class="text-base font-bold text-slate-900 pb-3.5 mb-4 border-b border-slate-100">👥 Usuarios del sistema</h2>
+      <div class="bg-white p-6 rounded-2xl shadow-sm">
+        <h2 class="text-base font-medium text-slate-900 pb-3.5 mb-4 border-b border-slate-100">Usuarios del sistema</h2>
         <div class="overflow-x-auto rounded-xl border border-slate-100">
           <table class="w-full text-left text-xs text-slate-600">
-            <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
               <tr>
                 <th class="py-3 px-3.5">Nombre</th>
                 <th class="py-3 px-3.5">Correo</th>
@@ -620,10 +580,10 @@
   </main>
 
   <!-- Footer Institucional -->
-  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
-    <div class="max-w-7xl mx-auto px-4 flex flex-wrap justify-between items-center gap-2">
+  <footer class="py-5 text-xs text-slate-400">
+    <div class="px-4 lg:px-8 max-w-[1400px] flex flex-wrap justify-between items-center gap-2">
       <div>
-        <span class="font-bold text-slate-600">EcoLogCity © 2026</span> · Taller de Proyectos 2 · Ingeniería de Sistemas e Informática
+        <span class="font-medium text-slate-600">EcoLogCity © 2026</span> · Taller de Proyectos 2 · Ingeniería de Sistemas e Informática
       </div>
       <div class="flex items-center gap-3">
         <span>Patrocinador: <b>DistriRápido S.A.C.</b></span>
@@ -631,7 +591,6 @@
     </div>
   </footer>
 
-  </div>
   </div>
 
   <!-- Frontend Logic Script -->

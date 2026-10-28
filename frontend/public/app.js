@@ -59,15 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-capa-calles').addEventListener('click', () => {
     if (map.hasLayer(tileLayerSat)) map.removeLayer(tileLayerSat);
     if (!map.hasLayer(tileLayerOSM)) map.addLayer(tileLayerOSM);
-    document.getElementById('btn-capa-calles').className = 'text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-lg font-semibold transition';
-    document.getElementById('btn-capa-satelite').className = 'text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition';
+    document.getElementById('btn-capa-calles').className = 'text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium transition';
+    document.getElementById('btn-capa-satelite').className = 'text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full font-medium transition';
   });
 
   document.getElementById('btn-capa-satelite').addEventListener('click', () => {
     if (map.hasLayer(tileLayerOSM)) map.removeLayer(tileLayerOSM);
     if (!map.hasLayer(tileLayerSat)) map.addLayer(tileLayerSat);
-    document.getElementById('btn-capa-satelite').className = 'text-xs bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-1.5 rounded-lg font-semibold transition';
-    document.getElementById('btn-capa-calles').className = 'text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg font-medium transition';
+    document.getElementById('btn-capa-satelite').className = 'text-xs bg-slate-900 text-white px-3 py-1.5 rounded-full font-medium transition';
+    document.getElementById('btn-capa-calles').className = 'text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full font-medium transition';
   });
 
   // Buscador en tiempo real y Filtro por Distrito
@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const MODULOS = ['dashboard', 'pedidos', 'flota', 'usuarios'];
 const MODULOS_SOLO_ADMIN = ['usuarios'];
+const TITULOS_MODULO = {
+  dashboard: 'Dashboard',
+  pedidos: 'Pedidos y rutas',
+  flota: 'Gestión de flota',
+  usuarios: 'Usuarios',
+};
 
 /**
  * Muestra un módulo y oculta los demás. Un módulo desconocido o sin permiso abre el Dashboard.
@@ -95,6 +101,9 @@ function mostrarModulo(nombre) {
     nombre = 'dashboard';
   }
   if (location.hash.slice(1) !== nombre) history.replaceState(null, '', `#${nombre}`);
+
+  document.getElementById('titulo-modulo').textContent = TITULOS_MODULO[nombre];
+  document.title = `${TITULOS_MODULO[nombre]} | EcoLogCity`;
 
   document.querySelectorAll('[data-modulo-panel]').forEach(panel => {
     panel.classList.toggle('hidden', panel.id !== `modulo-${nombre}`);
@@ -121,6 +130,29 @@ function alternarMenu(abrir) {
   document.getElementById('btn-menu').setAttribute('aria-expanded', String(abierto));
 }
 
+// Íconos de línea (mismo trazo que el menú lateral)
+const ICONOS = {
+  almacen: 'M3 21V9l9-6 9 6v12M9 21v-6h6v6',
+  pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
+  mapa: 'M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4zM9 4v13M15 6.5v13',
+  cerrar: 'M6 6l12 12M18 6L6 18',
+};
+const svgIcono = (nombre, tam = 14, color = 'currentColor') =>
+  `<svg width="${tam}" height="${tam}" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="${ICONOS[nombre]}"/></svg>`;
+
+/** Marcador circular con ícono, en los colores de la marca */
+function marcadorCircular(icono, fondo, tam = 34) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="background:${fondo};width:${tam}px;height:${tam}px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 4px 12px rgba(36,46,66,.25)">${svgIcono(icono, Math.round(tam * 0.45), '#fff')}</div>`,
+    iconSize: [tam, tam],
+    iconAnchor: [tam / 2, tam / 2],
+    popupAnchor: [0, -tam / 2],
+  });
+}
+
+const OPCIONES_POPUP = { className: 'popup-navy', closeButton: false };
+
 const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, c => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
@@ -136,14 +168,12 @@ function aplicarPermisosDeRol(usuario) {
 
   const rolBadge = document.getElementById('sesion-rol');
   rolBadge.textContent = admin ? 'Admin' : 'Usuario';
-  rolBadge.className += admin
-    ? ' bg-amber-500/20 text-amber-300 border border-amber-500/40'
-    : ' bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+  rolBadge.classList.add(admin ? 'pastilla-navy' : 'pastilla-celeste');
 
   document.querySelectorAll('[data-solo-admin]').forEach(el => el.classList.toggle('hidden', !admin));
 
   if (admin) {
-    document.getElementById('titulo-directorio').textContent = '📋 Directorio General de Pedidos';
+    document.getElementById('titulo-directorio').textContent = 'Directorio general de pedidos';
     document.getElementById('subtitulo-directorio').textContent = 'Pedidos registrados por todos los usuarios, listos para el motor de optimización';
   }
 }
@@ -154,9 +184,10 @@ function aplicarPermisosDeRol(usuario) {
 function initMap() {
   map = L.map('map').setView(HUANCAYO_CENTER, 14);
 
-  // Capa Base OpenStreetMap
+  // Capa base OpenStreetMap, atenuada por CSS (.tiles-claros) para el estilo claro de la marca
   tileLayerOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    className: 'tiles-claros',
     attribution: '© OpenStreetMap contributors | EcoLogCity'
   }).addTo(map);
 
@@ -172,36 +203,22 @@ function initMap() {
   dibujarZonasDeCobertura();
 
   // Marcador Almacén Central DistriRápido S.A.C.
-  const depotIcon = L.divIcon({
-    className: 'custom-depot-icon',
-    html: `
-      <div style="background: linear-gradient(135deg, #1d4ed8, #2563eb); color: white; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 4px 10px rgba(37,99,235,0.5); border: 2.5px solid white;">
-        🏢
-      </div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17]
-  });
-
-  L.marker(DEPOT_COORDS, { icon: depotIcon })
+  L.marker(DEPOT_COORDS, { icon: marcadorCircular('almacen', MARCA.navy, 36) })
     .addTo(map)
     .bindPopup(`
-      <div style="font-family: inherit; padding: 4px;">
-        <span style="background: #dbeafe; color: #1e40af; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">HUB LOGÍSTICO</span>
-        <h4 style="font-weight: bold; font-size: 13px; margin: 4px 0 2px 0; color: #0f172a;">Almacén Central DistriRápido S.A.C.</h4>
-        <p style="font-size: 11px; color: #64748b; margin: 0;">Punto de salida y retorno de flota (Depot VRPTW)</p>
-        <p style="font-size: 11px; font-weight: bold; color: #2563eb; margin-top: 4px;">📍 Huancayo Cercado (3,250 msnm)</p>
+      <div style="font-size: 12px; line-height: 1.45;">
+        <div style="font-weight: 500; font-size: 13px;">Almacén Central DistriRápido S.A.C.</div>
+        <div style="opacity: .75;">Punto de salida y retorno de la flota · Huancayo Cercado</div>
       </div>
-    `);
+    `, OPCIONES_POPUP);
 
   // Marcador Draggable para nuevo pedido
   const pinIcon = L.divIcon({
     className: 'custom-pulse-pin',
-    html: `
-      <div style="background: #ef4444; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 4px 8px rgba(239,68,68,0.4); border: 2px solid white;">
-        📍
-      </div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28]
+    html: `<div style="background:${MARCA.naranja};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 4px 12px rgba(223,73,39,.4)">${svgIcono('pin', 15, '#fff')}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16]
   });
 
   currentMarker = L.marker(HUANCAYO_CENTER, {
@@ -210,11 +227,11 @@ function initMap() {
   }).addTo(map);
 
   currentMarker.bindPopup(`
-    <div style="font-size: 11px; font-family: inherit;">
-      <b>Punto Seleccionado para Registro</b><br>
-      Puedes arrastrar este marcador en el mapa para ajustar la dirección exacta.
+    <div style="font-size: 12px; line-height: 1.45;">
+      <div style="font-weight: 500;">Punto del nuevo pedido</div>
+      <div style="opacity: .75;">Arrastre el marcador para ajustar la dirección.</div>
     </div>
-  `).openPopup();
+  `, OPCIONES_POPUP).openPopup();
 
   // Actualizar inputs al arrastrar el marcador
   currentMarker.on('dragend', function (e) {
@@ -237,17 +254,18 @@ function initMap() {
  */
 function dibujarZonasDeCobertura() {
   const zonas = [
-    { name: 'Huancayo Cercado', color: '#10b981', bounds: [[-12.0800, -75.2200], [-12.0550, -75.1950]] },
-    { name: 'El Tambo', color: '#3b82f6', bounds: [[-12.0600, -75.2400], [-12.0300, -75.2100]] },
-    { name: 'Chilca', color: '#f59e0b', bounds: [[-12.1000, -75.2250], [-12.0750, -75.1900]] }
+    { name: 'Huancayo Cercado', color: MARCA.naranja, bounds: [[-12.0800, -75.2200], [-12.0550, -75.1950]] },
+    { name: 'El Tambo', color: MARCA.celeste, bounds: [[-12.0600, -75.2400], [-12.0300, -75.2100]] },
+    { name: 'Chilca', color: MARCA.navy, bounds: [[-12.1000, -75.2250], [-12.0750, -75.1900]] }
   ];
 
   zonas.forEach(z => {
     L.rectangle(z.bounds, {
       color: z.color,
       weight: 1,
-      dashArray: '4, 4',
-      fillOpacity: 0.05
+      opacity: 0.35,
+      dashArray: '3, 5',
+      fillOpacity: 0.03
     }).addTo(map).bindTooltip(z.name, { permanent: false, direction: 'center' });
   });
 }
@@ -268,12 +286,12 @@ async function geocodificarDireccionActual() {
   const spinner = document.getElementById('spinner-geo');
 
   if (!direccion) {
-    mostrarAlerta('⚠️ Por favor ingrese una dirección antes de ubicar.', 'warning');
+    mostrarAlerta('Por favor ingrese una dirección antes de ubicar.', 'warning');
     return;
   }
 
   spinner.classList.remove('hidden');
-  mostrarAlerta('🔍 Consultando OpenStreetMap en Huancayo...', 'info');
+  mostrarAlerta('Consultando OpenStreetMap en Huancayo...', 'info');
   sugsEl.classList.add('hidden');
   sugsEl.innerHTML = '';
 
@@ -282,7 +300,7 @@ async function geocodificarDireccionActual() {
     const json = await res.json();
 
     if (!json.ok) {
-      mostrarAlerta(`❌ ${json.error || 'No se pudo geocodificar la dirección.'}`, 'error');
+      mostrarAlerta(`${json.error || 'No se pudo geocodificar la dirección.'}`, 'error');
       return;
     }
 
@@ -296,9 +314,9 @@ async function geocodificarDireccionActual() {
     actualizarCamposCoordenadas(lat, lon);
 
     if (data.requiere_seleccion_manual && data.sugerencias && data.sugerencias.length > 0) {
-      mostrarAlerta(`⚠️ ${data.mensaje || 'Múltiples coincidencias. Selecciona una opción o arrastra el marcador.'}`, 'warning');
+      mostrarAlerta(`${data.mensaje || 'Múltiples coincidencias. Selecciona una opción o arrastra el marcador.'}`, 'warning');
       sugsEl.classList.remove('hidden');
-      sugsEl.innerHTML = '<p class="text-[11px] font-semibold text-slate-700 mb-1">Coincidencias encontradas:</p>';
+      sugsEl.innerHTML = '<p class="text-[11px] font-medium text-slate-700 mb-1">Coincidencias encontradas:</p>';
       
       data.sugerencias.forEach((sug, i) => {
         const btn = document.createElement('button');
@@ -309,16 +327,16 @@ async function geocodificarDireccionActual() {
           currentMarker.setLatLng([sug.lat, sug.lon]);
           map.setView([sug.lat, sug.lon], 16);
           actualizarCamposCoordenadas(sug.lat, sug.lon);
-          mostrarAlerta(`✅ Ubicación fijada: ${sug.display_name.slice(0, 50)}...`, 'success');
+          mostrarAlerta(`Ubicación fijada: ${sug.display_name.slice(0, 50)}...`, 'success');
         };
         sugsEl.appendChild(btn);
       });
     } else {
-      mostrarAlerta(`✅ Dirección geocodificada con éxito: ${data.direccion_formateada.slice(0, 60)}...`, 'success');
+      mostrarAlerta(`Dirección geocodificada con éxito: ${data.direccion_formateada.slice(0, 60)}...`, 'success');
     }
 
   } catch (err) {
-    mostrarAlerta('❌ Error de comunicación con el servicio de mapas.', 'error');
+    mostrarAlerta('Error de comunicación con el servicio de mapas.', 'error');
   } finally {
     spinner.classList.add('hidden');
   }
@@ -329,13 +347,13 @@ function mostrarAlerta(mensaje, tipo = 'info') {
   alertEl.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'bg-amber-50', 'text-amber-800', 'bg-red-50', 'text-red-800', 'bg-blue-50', 'text-blue-800');
 
   if (tipo === 'success') {
-    alertEl.className = 'p-2.5 rounded-lg text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium';
+    alertEl.className = 'p-3 rounded-xl text-xs bg-sky-50 text-sky-800 font-medium';
   } else if (tipo === 'warning') {
-    alertEl.className = 'p-2.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200 font-medium';
+    alertEl.className = 'p-3 rounded-xl text-xs bg-amber-50 text-amber-800 font-medium';
   } else if (tipo === 'error') {
-    alertEl.className = 'p-2.5 rounded-lg text-xs bg-red-50 text-red-800 border border-red-200 font-medium';
+    alertEl.className = 'p-3 rounded-xl text-xs bg-red-50 text-red-800 font-medium';
   } else {
-    alertEl.className = 'p-2.5 rounded-lg text-xs bg-blue-50 text-blue-800 border border-blue-200 font-medium';
+    alertEl.className = 'p-3 rounded-xl text-xs bg-slate-100 text-slate-700 font-medium';
   }
 
   alertEl.innerHTML = mensaje;
@@ -388,7 +406,7 @@ async function guardarNuevoPedido(e) {
       return;
     }
 
-    alert(`🎉 ¡Pedido registrado exitosamente en Huancayo!\nCódigo: ${json.data.codigo_seguimiento}`);
+    alert(`¡Pedido registrado exitosamente en Huancayo!\nCódigo: ${json.data.codigo_seguimiento}`);
     
     // Limpiar formulario y resetear
     document.getElementById('form-pedido').reset();
@@ -407,7 +425,7 @@ async function guardarNuevoPedido(e) {
     alert('Error al conectar con la API de EcoLogCity');
   } finally {
     btnSubmit.disabled = false;
-    btnSubmit.innerHTML = '<span>💾 Guardar Pedido</span>';
+    btnSubmit.innerHTML = '<span>Guardar pedido</span>';
   }
 }
 
@@ -477,7 +495,7 @@ function renderizarResumenFlota(flota) {
   document.getElementById('resumen-flota').innerHTML = filas.map(([etiqueta, valor]) => `
     <div class="flex justify-between border-b border-slate-100 pb-2 last:border-0">
       <dt class="text-slate-500">${etiqueta}</dt>
-      <dd class="font-semibold text-slate-900">${valor}</dd>
+      <dd class="font-medium text-slate-900">${valor}</dd>
     </div>`).join('');
 }
 
@@ -496,7 +514,7 @@ function renderizarBarras(contenedorId, conteos, colorBarra) {
     <div>
       <div class="flex justify-between mb-1">
         <span class="text-slate-600">${escaparHtml(etiqueta.replace('_', ' '))}</span>
-        <span class="font-semibold text-slate-900">${cantidad}</span>
+        <span class="font-medium text-slate-900">${cantidad}</span>
       </div>
       <div class="w-full bg-slate-100 rounded-full h-1.5">
         <div class="${colorBarra} h-1.5 rounded-full" style="width: ${Math.round((cantidad / maximo) * 100)}%"></div>
@@ -506,8 +524,9 @@ function renderizarBarras(contenedorId, conteos, colorBarra) {
 
 function renderizarResumenPedidos(pedidos) {
   const contar = (clave, lista) => lista.reduce((acc, p) => ({ ...acc, [p[clave]]: (acc[p[clave]] || 0) + 1 }), {});
-  renderizarBarras('resumen-estados', contar('estado', pedidos), 'bg-indigo-500');
-  renderizarBarras('resumen-distritos', contar('distrito', pedidos.filter(p => p.estado !== 'CANCELADO')), 'bg-emerald-500');
+  const porEstado = Object.fromEntries(Object.entries(contar('estado', pedidos)).map(([e, n]) => [ETIQUETAS_ESTADO[e] || e, n]));
+  renderizarBarras('resumen-estados', porEstado, 'bg-slate-900');
+  renderizarBarras('resumen-distritos', contar('distrito', pedidos.filter(p => p.estado !== 'CANCELADO')), 'bg-sky-500');
 }
 
 /**
@@ -522,7 +541,7 @@ async function cargarPedidos() {
     const json = await res.json();
 
     if (!json.ok) {
-      tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-red-500 font-semibold">Error al cargar pedidos</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-red-500 font-medium">Error al cargar pedidos</td></tr>`;
       return;
     }
 
@@ -545,53 +564,55 @@ function renderizarMarcadoresEnMapa(pedidos) {
   pedidos.forEach(p => {
     if (p.estado === 'CANCELADO') return;
 
-    // Color según nivel de prioridad
-    let pinColor = '#059669'; // Normal
-    let pinBorder = 'white';
-    if (p.prioridad >= 5) pinColor = '#dc2626'; // Crítico / Express
-    else if (p.prioridad >= 4) pinColor = '#ea580c'; // Alto
-    else if (p.prioridad === 3) pinColor = '#0284c7'; // Medio
-
+    const pinColor = colorPrioridad(p.prioridad);
     const orderIcon = L.divIcon({
-      className: 'custom-order-icon',
-      html: `
-        <div style="background-color: ${pinColor}; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid ${pinBorder}; box-shadow: 0 2px 5px rgba(0,0,0,0.35);">
-          ${p.prioridad}
-        </div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      className: '',
+      html: `<div style="background:${pinColor};color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:2.5px solid #fff;box-shadow:0 3px 8px rgba(36,46,66,.3)">${p.prioridad}</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -13]
     });
 
     const m = L.marker([p.latitud, p.longitud], { icon: orderIcon }).addTo(ordersLayerGroup);
     m.bindPopup(`
-      <div style="font-family: inherit; font-size: 12px; min-width: 190px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <span style="font-size: 10px; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px;">${p.codigo_seguimiento}</span>
-          <span style="font-size: 10px; font-weight: bold; color: ${pinColor};">Prioridad ${p.prioridad}</span>
-        </div>
-        <b style="color: #0f172a; font-size: 13px;">${p.cliente_nombre}</b>
-        <div style="color: #475569; margin: 4px 0 2px 0;">📍 ${p.direccion_texto}</div>
-        <div style="color: #059669; font-weight: 600; font-size: 11px;">🏛️ ${p.distrito}</div>
-        ${p.referencia ? `<div style="font-style: italic; color: #64748b; font-size: 11px;">Ref: ${p.referencia}</div>` : ''}
-        <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; font-size: 11px;">
-          <span>🕒 <b>${p.ventana_inicio.slice(0, 5)} - ${p.ventana_fin.slice(0, 5)}</b></span>
-          <span>⚖️ <b>${p.peso_kg} kg</b></span>
-        </div>
+      <div style="font-size: 12px; line-height: 1.45; min-width: 180px;">
+        <div style="font-weight: 500; font-size: 13px;">${escaparHtml(p.direccion_texto)}, ${escaparHtml(p.distrito)}</div>
+        <div style="opacity: .75;">${escaparHtml(p.cliente_nombre)} · Pedido ${escaparHtml(p.codigo_seguimiento)}</div>
+        <div style="opacity: .75;">${p.ventana_inicio.slice(0, 5)} – ${p.ventana_fin.slice(0, 5)} · ${parseFloat(p.peso_kg).toFixed(1)} kg</div>
       </div>
-    `);
+    `, OPCIONES_POPUP);
+    m.on('click', () => mostrarTarjetaPedido(p));
   });
+}
+
+/** Color del marcador según prioridad: navy normal, celeste media, naranja alta, rojo crítica */
+function colorPrioridad(prioridad) {
+  if (prioridad >= 5) return MARCA.peligro;
+  if (prioridad >= 4) return MARCA.naranja;
+  if (prioridad === 3) return MARCA.celeste;
+  return MARCA.navy;
 }
 
 // El directorio general del administrador tiene la columna "Registrado por"
 const columnasTabla = () => (esAdmin() ? 10 : 9);
 
+// Pastillas de estado: celeste en proceso, navy entregado (como "In Transit" / "Delivered")
 const ESTILOS_ESTADO = {
-  REGISTRADO: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  PLANIFICADO: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-  EN_RUTA: 'bg-sky-50 text-sky-800 border-sky-200',
-  ENTREGADO: 'bg-slate-100 text-slate-700 border-slate-300',
-  CANCELADO: 'bg-red-50 text-red-700 border-red-200',
+  REGISTRADO: 'pastilla-suave',
+  PLANIFICADO: 'pastilla-celeste',
+  EN_RUTA: 'pastilla-celeste',
+  ENTREGADO: 'pastilla-navy',
+  CANCELADO: 'pastilla-gris',
 };
+const ETIQUETAS_ESTADO = {
+  REGISTRADO: 'Registrado',
+  PLANIFICADO: 'Planificado',
+  EN_RUTA: 'En ruta',
+  ENTREGADO: 'Entregado',
+  CANCELADO: 'Cancelado',
+};
+const pastillaEstado = (estado) =>
+  `<span class="pastilla ${ESTILOS_ESTADO[estado] || 'pastilla-suave'}">${ETIQUETAS_ESTADO[estado] || estado}</span>`;
 
 /**
  * Filtra los pedidos en vivo por texto y distrito y los pinta en la tabla
@@ -624,28 +645,22 @@ function filtrarYRenderizarTabla() {
     tr.className = 'hover:bg-slate-50/80 transition-colors border-b border-slate-100';
 
     // Badge de estado
-    const estadoBadge = `<span class="${ESTILOS_ESTADO[p.estado] || ESTILOS_ESTADO.REGISTRADO} border px-2 py-0.5 rounded-full text-[10px] font-bold">${p.estado.replace('_', ' ')}</span>`;
+    const estadoBadge = pastillaEstado(p.estado);
 
-    // Badge de prioridad
-    let prioridadBadge = '<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">1 Normal</span>';
-    if (p.prioridad >= 5) {
-      prioridadBadge = '<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse">5 Crítica</span>';
-    } else if (p.prioridad >= 4) {
-      prioridadBadge = '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-semibold">4 Alta</span>';
-    } else if (p.prioridad === 3) {
-      prioridadBadge = '<span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded text-[10px] font-semibold">3 Media</span>';
-    }
+    // Prioridad: punto de color + texto
+    const nombrePrioridad = { 1: 'Baja', 2: 'Normal', 3: 'Media', 4: 'Alta', 5: 'Crítica' }[p.prioridad] || 'Normal';
+    const prioridadBadge = `<span class="inline-flex items-center gap-1.5 text-slate-700"><span class="w-2 h-2 rounded-full" style="background:${colorPrioridad(p.prioridad)}"></span>${nombrePrioridad}</span>`;
 
     tr.innerHTML = `
-      <td class="py-3 px-3.5 font-mono font-semibold text-slate-900 text-xs">${p.codigo_seguimiento}</td>
+      <td class="py-3 px-3.5 font-mono font-medium text-slate-900 text-xs">${p.codigo_seguimiento}</td>
       <td class="py-3 px-3.5">
-        <div class="font-bold text-slate-900 text-xs">${p.cliente_nombre}</div>
+        <div class="font-medium text-slate-900 text-xs">${p.cliente_nombre}</div>
         <div class="text-[11px] text-slate-400">${p.cliente_telefono || 'Sin teléfono'}</div>
       </td>
       ${esAdmin() ? `<td class="py-3 px-3.5 text-slate-700">${p.registrado_por || '<span class="text-slate-400 italic">Sin asignar</span>'}</td>` : ''}
       <td class="py-3 px-3.5">
         <div class="text-slate-800 font-medium">${p.direccion_texto}</div>
-        <div class="text-[11px] text-emerald-700 font-semibold">${p.distrito}</div>
+        <div class="text-[11px] text-slate-500">${p.distrito}</div>
         ${p.referencia ? `<div class="text-[10px] text-slate-400 italic">Ref: ${p.referencia}</div>` : ''}
       </td>
       <td class="py-3 px-3.5 font-mono text-[11px] text-slate-500">
@@ -656,21 +671,20 @@ function filtrarYRenderizarTabla() {
         ${p.ventana_inicio.slice(0, 5)} - ${p.ventana_fin.slice(0, 5)}
       </td>
       <td class="py-3 px-3.5 text-slate-700">
-        <span class="font-semibold">${parseFloat(p.peso_kg).toFixed(1)} kg</span>
+        <span class="font-medium">${parseFloat(p.peso_kg).toFixed(1)} kg</span>
         <span class="text-slate-400">·</span>
         <span class="text-slate-500">${parseFloat(p.volumen_m3).toFixed(2)} m³</span>
       </td>
       <td class="py-3 px-3.5">${prioridadBadge}</td>
       <td class="py-3 px-3.5">${estadoBadge}</td>
       <td class="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">
-        <button class="bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
-          onclick="centrarEnMapa(${p.latitud}, ${p.longitud}, '${p.cliente_nombre}')">
-          📍 Ver Mapa
+        <button class="boton-icono" title="Ver en el mapa" aria-label="Ver en el mapa" onclick="centrarEnMapa('${p.id}')">
+          ${svgIcono('mapa', 15)}
         </button>
         ${p.estado !== 'CANCELADO' ? `
-          <button class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+          <button class="boton-icono hover:!bg-red-100 hover:text-red-700" title="Cancelar pedido" aria-label="Cancelar pedido"
             onclick="cancelarPedido('${p.id}')">
-            ✕
+            ${svgIcono('cerrar', 14)}
           </button>
         ` : ''}
       </td>
@@ -682,9 +696,14 @@ function filtrarYRenderizarTabla() {
 /**
  * Centra y hace zoom suave sobre el marcador de un pedido en el mapa
  */
-window.centrarEnMapa = async function (lat, lon, nombre) {
-  window.scrollTo({ top: 120, behavior: 'smooth' });
-  
+window.centrarEnMapa = async function (id) {
+  const pedido = todosLosPedidos.find(p => p.id === id);
+  if (!pedido) return;
+  const lat = parseFloat(pedido.latitud);
+  const lon = parseFloat(pedido.longitud);
+  document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  mostrarTarjetaPedido(pedido);
+
   if (!map.hasLayer(singleRouteLayerGroup)) {
       singleRouteLayerGroup.addTo(map);
   }
@@ -694,14 +713,13 @@ window.centrarEnMapa = async function (lat, lon, nombre) {
   const almacenLat = -12.066;
   const almacenLon = -75.204;
   
-  const iconCasita = L.divIcon({
-      html: '<div style="font-size: 26px; text-shadow: 2px 2px 4px rgba(0,0,0,0.4);">🏠</div>',
-      className: 'custom-div-icon',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
-  });
-  
-  L.marker([almacenLat, almacenLon], {icon: iconCasita}).addTo(singleRouteLayerGroup).bindPopup('<b>🏠 Local Comercial (Inicio)</b>').openPopup();
+  L.marker([almacenLat, almacenLon], { icon: marcadorCircular('almacen', MARCA.navy, 32) })
+    .addTo(singleRouteLayerGroup)
+    .bindPopup('<div style="font-weight:500">Local comercial (inicio)</div>', OPCIONES_POPUP);
+  L.marker([lat, lon], { icon: marcadorCircular('pin', MARCA.naranja, 36) })
+    .addTo(singleRouteLayerGroup)
+    .bindPopup(`<div style="font-weight:500">${escaparHtml(pedido.direccion_texto)}, ${escaparHtml(pedido.distrito)}</div><div style="opacity:.75">${escaparHtml(pedido.cliente_nombre)}</div>`, OPCIONES_POPUP)
+    .openPopup();
   
   // Fetch OSRM route for single item
   try {
@@ -712,7 +730,7 @@ window.centrarEnMapa = async function (lat, lon, nombre) {
       if(data.routes && data.routes.length > 0) {
           const geojsonFeature = data.routes[0].geometry;
           L.geoJSON(geojsonFeature, {
-              style: { color: '#ef4444', weight: 5, opacity: 0.9, dashArray: '8, 8' }
+              style: { color: MARCA.naranja, weight: 3, opacity: 0.95, dashArray: '2, 6', lineCap: 'round' }
           }).addTo(singleRouteLayerGroup);
           
           // Ajustar la vista para que se vea toda la ruta
@@ -726,6 +744,34 @@ window.centrarEnMapa = async function (lat, lon, nombre) {
       map.flyTo([lat, lon], 17, { duration: 1.2 });
   }
 };
+
+/**
+ * Tarjeta flotante sobre el mapa con el detalle del pedido seleccionado
+ */
+function mostrarTarjetaPedido(p) {
+  const tarjeta = document.getElementById('tarjeta-pedido-mapa');
+  const dato = (etiqueta, valor) => `
+    <div class="min-w-0">
+      <div class="text-[11px] text-slate-500">${etiqueta}</div>
+      <div class="text-xs font-medium text-slate-900 truncate">${valor}</div>
+    </div>`;
+  tarjeta.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <h3 class="text-lg font-medium text-slate-900">Pedido ${escaparHtml(p.codigo_seguimiento)}</h3>
+      <div class="flex items-center gap-2 shrink-0">
+        ${pastillaEstado(p.estado)}
+        <button class="boton-icono !w-7 !h-7" aria-label="Cerrar detalle" onclick="document.getElementById('tarjeta-pedido-mapa').classList.add('hidden')">${svgIcono('cerrar', 12)}</button>
+      </div>
+    </div>
+    <div class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
+      ${dato('Desde', 'Almacén Central')}
+      ${dato('Hasta', `${escaparHtml(p.direccion_texto)}, ${escaparHtml(p.distrito)}`)}
+      ${dato('Cliente', escaparHtml(p.cliente_nombre))}
+      ${dato('Peso', `${parseFloat(p.peso_kg).toFixed(1)} kg`)}
+      ${dato('Ventana', `${p.ventana_inicio.slice(0, 5)} – ${p.ventana_fin.slice(0, 5)}`)}
+    </div>`;
+  tarjeta.classList.remove('hidden');
+}
 
 /**
  * Cancela un pedido con confirmación
@@ -751,6 +797,8 @@ window.cancelarPedido = async function (id) {
  * Carga el módulo de Gestión de Flota (US-008).
  * El administrador ve también los vehículos dados de baja y puede registrar o cambiar su estado.
  */
+const TIPOS_VEHICULO = { CAMIONETA: 'Camioneta', FURGON_MEDIANO: 'Furgón mediano', FURGON_GRANDE: 'Furgón grande' };
+
 async function cargarFlota() {
   const lista = document.getElementById('flota-lista');
   const admin = esAdmin();
@@ -769,16 +817,14 @@ async function cargarFlota() {
     lista.innerHTML = '';
     vehiculos.forEach(v => {
       const card = document.createElement('div');
-      card.className = `border rounded-xl p-4 flex flex-col justify-between transition ${v.activo
-        ? 'bg-slate-50 border-slate-200 hover:border-emerald-300'
-        : 'bg-slate-100 border-slate-200 opacity-60'}`;
+      card.className = `bg-white rounded-2xl p-5 shadow-sm flex flex-col justify-between transition ${v.activo ? '' : 'opacity-60'}`;
 
       const tagCombustible = v.tipo_combustible === 'GNV'
-        ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">🌱 GNV (Ecológico)</span>'
-        : '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">⛽ Diésel</span>';
+        ? '<span class="pastilla pastilla-celeste">GNV</span>'
+        : '<span class="pastilla pastilla-navy">Diésel</span>';
 
       const accionAdmin = admin ? `
-        <button class="mt-3 w-full text-[11px] font-semibold px-2.5 py-1.5 rounded-md transition ${v.activo
+        <button class="mt-4 w-full text-xs font-medium px-3 py-2 rounded-full transition ${v.activo
           ? 'bg-red-50 hover:bg-red-100 text-red-600'
           : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'}"
           onclick="cambiarEstadoVehiculo('${v.id}', ${!v.activo})">
@@ -788,24 +834,24 @@ async function cargarFlota() {
       card.innerHTML = `
         <div class="flex justify-between items-start mb-2">
           <div>
-            <span class="font-mono text-xs font-bold bg-slate-900 text-white px-2 py-0.5 rounded">${v.placa}</span>
-            ${v.activo ? '' : '<span class="ml-1 text-[10px] font-bold text-slate-500">DE BAJA</span>'}
-            <h4 class="font-bold text-slate-900 text-sm mt-1">${v.marca} ${v.modelo}</h4>
+            <span class="pastilla pastilla-suave">${v.placa}</span>
+            ${v.activo ? '' : '<span class="ml-1 text-[10px] font-medium text-slate-500">DE BAJA</span>'}
+            <h4 class="font-medium text-slate-900 text-sm mt-1">${v.marca} ${v.modelo}</h4>
           </div>
           ${tagCombustible}
         </div>
         <div class="text-xs text-slate-600 space-y-1 mt-2 pt-2 border-t border-slate-200">
           <div class="flex justify-between">
             <span class="text-slate-400">Tipo:</span>
-            <span class="font-semibold text-slate-800">${v.tipo_vehiculo.replace('_', ' ')}</span>
+            <span class="font-medium text-slate-800">${TIPOS_VEHICULO[v.tipo_vehiculo] || v.tipo_vehiculo}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Capacidad Máxima:</span>
-            <span class="font-semibold text-slate-800">${parseFloat(v.capacidad_peso_kg).toFixed(0)} kg / ${parseFloat(v.capacidad_volumen_m3).toFixed(1)} m³</span>
+            <span class="font-medium text-slate-800">${parseFloat(v.capacidad_peso_kg).toFixed(0)} kg / ${parseFloat(v.capacidad_volumen_m3).toFixed(1)} m³</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Rendimiento:</span>
-            <span class="font-semibold text-slate-800">${v.consumo_gal_km} gal/km</span>
+            <span class="font-medium text-slate-800">${v.consumo_gal_km} gal/km</span>
           </div>
         </div>
         ${accionAdmin}
@@ -907,24 +953,24 @@ async function cargarUsuarios() {
     tbody.innerHTML = json.data.map(u => {
       const esYo = u.id === miId;
       const rolBadge = u.rol === 'ADMIN'
-        ? '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ADMIN</span>'
-        : '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">USUARIO</span>';
+        ? '<span class="pastilla pastilla-navy">Admin</span>'
+        : '<span class="pastilla pastilla-celeste">Usuario</span>';
       const estadoBadge = u.activo
-        ? '<span class="text-emerald-700 font-semibold">Activo</span>'
-        : '<span class="text-slate-400 font-semibold">Inactivo</span>';
+        ? '<span class="text-emerald-700 font-medium">Activo</span>'
+        : '<span class="text-slate-400 font-medium">Inactivo</span>';
       const acciones = esYo
         ? '<span class="text-[11px] text-slate-400 italic">Su cuenta</span>'
-        : `<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+        : `<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-[11px] font-medium transition"
              onclick="actualizarUsuario('${u.id}', { rol: '${u.rol === 'ADMIN' ? 'USUARIO' : 'ADMIN'}' })">
              ${u.rol === 'ADMIN' ? 'Hacer usuario' : 'Hacer admin'}
            </button>
-           <button class="${u.activo ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'} px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+           <button class="${u.activo ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'} px-2.5 py-1 rounded-md text-[11px] font-medium transition"
              onclick="actualizarUsuario('${u.id}', { activo: ${!u.activo} })">
              ${u.activo ? 'Desactivar' : 'Activar'}
            </button>`;
       return `
         <tr class="hover:bg-slate-50/80 ${u.activo ? '' : 'opacity-60'}">
-          <td class="py-3 px-3.5 font-bold text-slate-900">${escaparHtml(u.nombre_completo)}</td>
+          <td class="py-3 px-3.5 font-medium text-slate-900">${escaparHtml(u.nombre_completo)}</td>
           <td class="py-3 px-3.5">${escaparHtml(u.email)}</td>
           <td class="py-3 px-3.5">${rolBadge}</td>
           <td class="py-3 px-3.5 font-mono">${u.pedidos_registrados}</td>
@@ -1065,7 +1111,7 @@ window.optimizarRutas = async function () {
     ordersLayerGroup.clearLayers(); // Ocultar puntos sueltos para mostrar las secuencias limpias
 
     // Paleta de colores para vehiculos (hasta 5 colores)
-    const colores = ['#4F46E5', '#E11D48', '#059669', '#D97706', '#9333EA'];
+    const colores = MARCA.rutas;
 
     // Para cada ruta (Vehículo)
     rutas.forEach(async (rutaObj, idx) => {
@@ -1088,19 +1134,15 @@ window.optimizarRutas = async function () {
                 fillOpacity: 0.9
             }).addTo(vrpLayerGroup);
             
-            m.bindPopup(`<b>Vehículo:</b> ${rutaObj.vehiculo.placa} <br> <b>Pedido:</b> ${p.codigo}`);
+            m.bindPopup(`<div style="font-weight:500">Pedido ${escaparHtml(p.codigo)}</div><div style="opacity:.75">Vehículo ${escaparHtml(rutaObj.vehiculo.placa)}</div>`, OPCIONES_POPUP);
         });
 
         coordString.push(`${almacen.lon},${almacen.lat}`); // Retorno
 
         // Dibujar Almacén principal
-        const iconCasitaVrp = L.divIcon({
-            html: '<div style="font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">🏠</div>',
-            className: 'custom-div-icon',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-        L.marker([almacen.lat, almacen.lon], {icon: iconCasitaVrp}).addTo(vrpLayerGroup).bindPopup('<b>🏠 Local Central (Inicio)</b><br>DistriRápidoén DistriRápido</b>');
+        L.marker([almacen.lat, almacen.lon], { icon: marcadorCircular('almacen', MARCA.navy, 36) })
+            .addTo(vrpLayerGroup)
+            .bindPopup('<div style="font-weight:500">Almacén Central DistriRápido</div><div style="opacity:.75">Salida y retorno de la flota</div>', OPCIONES_POPUP);
 
         // Llamar a OSRM Demo API para obtener la polyline real de las calles
         try {
