@@ -31,9 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarPedidos();
 
   // Navegación por módulos (Dashboard, Pedidos y Rutas, Gestión de Flota, Usuarios)
-  document.querySelectorAll('[data-modulo]').forEach(tab => {
-    tab.addEventListener('click', () => mostrarModulo(tab.dataset.modulo));
+  document.querySelectorAll('[data-modulo]').forEach(item => {
+    item.addEventListener('click', () => {
+      mostrarModulo(item.dataset.modulo);
+      alternarMenu(false);
+    });
   });
+  document.getElementById('btn-menu').addEventListener('click', () => alternarMenu());
+  document.getElementById('menu-fondo').addEventListener('click', () => alternarMenu(false));
   window.addEventListener('hashchange', () => mostrarModulo(location.hash.slice(1)));
   mostrarModulo(location.hash.slice(1));
 
@@ -94,14 +99,26 @@ function mostrarModulo(nombre) {
   document.querySelectorAll('[data-modulo-panel]').forEach(panel => {
     panel.classList.toggle('hidden', panel.id !== `modulo-${nombre}`);
   });
-  document.querySelectorAll('[data-modulo]').forEach(tab => {
-    tab.setAttribute('aria-selected', String(tab.dataset.modulo === nombre));
+  document.querySelectorAll('[data-modulo]').forEach(item => {
+    if (item.dataset.modulo === nombre) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
   });
 
   // Leaflet calcula mal su tamaño si el mapa se creó estando oculto
   if (nombre === 'pedidos' && map) setTimeout(() => map.invalidateSize(), 0);
   if (nombre === 'flota') cargarFlota();
   if (nombre === 'usuarios') cargarUsuarios();
+}
+
+/**
+ * Abre o cierra el menú lateral en pantallas pequeñas (en escritorio siempre está visible)
+ */
+function alternarMenu(abrir) {
+  const menu = document.getElementById('menu-lateral');
+  const abierto = abrir ?? menu.classList.contains('-translate-x-full');
+  menu.classList.toggle('-translate-x-full', !abierto);
+  document.getElementById('menu-fondo').classList.toggle('hidden', !abierto);
+  document.getElementById('btn-menu').setAttribute('aria-expanded', String(abierto));
 }
 
 const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, c => (

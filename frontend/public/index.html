@@ -58,9 +58,9 @@
       animation: pin-pulse 1.8s infinite;
       z-index: -1;
     }
-    .tab-modulo { padding: 0.75rem 1rem; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s, border-color .15s; }
-    .tab-modulo:hover { color: #0f172a; }
-    .tab-modulo[aria-selected="true"] { color: #047857; border-bottom-color: #10b981; }
+    .item-menu { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.625rem; font-weight: 600; color: #cbd5e1; text-align: left; transition: background-color .15s, color .15s; }
+    .item-menu:hover { background-color: rgba(51, 65, 85, 0.6); color: #ffffff; }
+    .item-menu[aria-current="page"] { background-color: rgba(16, 185, 129, 0.15); color: #6ee7b7; box-shadow: inset 3px 0 0 #10b981; }
     @keyframes pin-pulse {
       0% { transform: scale(1); opacity: 0.8; }
       100% { transform: scale(2.4); opacity: 0; }
@@ -71,16 +71,20 @@
 
   <!-- Top Navigation Bar -->
   <header class="bg-slate-900 text-white border-b border-emerald-500/20 sticky top-0 z-50 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-      
+    <div class="px-4 py-3 flex justify-between items-center gap-4 h-16">
+
       <!-- Brand & Context -->
-      <div class="flex items-center space-x-3.5">
+      <div class="flex items-center space-x-3.5 min-w-0">
+        <button id="btn-menu" class="lg:hidden text-slate-300 hover:text-white p-1.5 -ml-1.5 rounded-lg hover:bg-slate-800 transition"
+          aria-label="Abrir menú" aria-controls="menu-lateral" aria-expanded="false">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
         <div class="h-10 w-10 bg-gradient-to-tr from-emerald-600 to-teal-400 text-slate-900 font-extrabold flex items-center justify-center rounded-xl shadow-md text-xl ring-2 ring-emerald-400/40">
           🌱
         </div>
         <div>
           <h1 class="text-lg font-bold tracking-tight text-white">EcoLogCity</h1>
-          <p class="text-xs text-slate-400">
+          <p class="text-xs text-slate-400 hidden md:block truncate">
             DistriRápido S.A.C. · Optimizador de Rutas Sostenibles en Altitud (Huancayo, 3,250 msnm)
           </p>
         </div>
@@ -101,15 +105,26 @@
     </div>
   </header>
 
-  <!-- Navegación por módulos -->
-  <nav class="bg-white border-b border-slate-200 sticky top-[64px] z-40">
-    <div class="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto text-sm" role="tablist" aria-label="Módulos de EcoLogCity">
-      <button data-modulo="dashboard" role="tab" class="tab-modulo">📊 Dashboard</button>
-      <button data-modulo="pedidos" role="tab" class="tab-modulo">📦 Pedidos y Rutas</button>
-      <button data-modulo="flota" role="tab" class="tab-modulo">🚚 Gestión de Flota</button>
-      <button data-modulo="usuarios" data-solo-admin role="tab" class="tab-modulo hidden">👥 Usuarios</button>
-    </div>
-  </nav>
+  <div class="flex flex-1">
+
+  <!-- Fondo oscuro del menú en pantallas pequeñas -->
+  <div id="menu-fondo" class="hidden fixed inset-0 top-16 bg-slate-900/50 z-30 lg:hidden"></div>
+
+  <!-- Menú lateral de módulos -->
+  <aside id="menu-lateral"
+    class="fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col
+           -translate-x-full lg:translate-x-0 transition-transform duration-200">
+    <nav class="flex-1 p-3 space-y-1 text-sm" aria-label="Módulos de EcoLogCity">
+      <p class="px-3.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Módulos</p>
+      <button data-modulo="dashboard" class="item-menu"><span aria-hidden="true">📊</span> Dashboard</button>
+      <button data-modulo="pedidos" class="item-menu"><span aria-hidden="true">📦</span> Pedidos y Rutas</button>
+      <button data-modulo="flota" class="item-menu"><span aria-hidden="true">🚚</span> Gestión de Flota</button>
+      <button data-modulo="usuarios" data-solo-admin class="item-menu hidden"><span aria-hidden="true">👥</span> Usuarios</button>
+    </nav>
+    <p class="p-4 text-[11px] text-slate-500 border-t border-slate-800">Huancayo · 3,250 msnm</p>
+  </aside>
+
+  <div class="flex-1 min-w-0 flex flex-col">
 
   <!-- Main Workspace Container -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
@@ -615,6 +630,9 @@
       </div>
     </div>
   </footer>
+
+  </div>
+  </div>
 
   <!-- Frontend Logic Script -->
   <script src="session.js"></script>
