@@ -58,6 +58,9 @@
       animation: pin-pulse 1.8s infinite;
       z-index: -1;
     }
+    .tab-modulo { padding: 0.75rem 1rem; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s, border-color .15s; }
+    .tab-modulo:hover { color: #0f172a; }
+    .tab-modulo[aria-selected="true"] { color: #047857; border-bottom-color: #10b981; }
     @keyframes pin-pulse {
       0% { transform: scale(1); opacity: 0.8; }
       100% { transform: scale(2.4); opacity: 0; }
@@ -85,15 +88,6 @@
 
       <!-- Acciones y Sesión -->
       <div class="flex items-center flex-wrap gap-2 text-xs">
-        <button id="btn-abrir-flota" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg font-medium border border-slate-700 transition flex items-center gap-1.5">
-          <span>🚚</span>
-          <span>Gestión de Flota</span>
-        </button>
-
-        <button id="btn-exportar-csv" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-medium border border-slate-700 transition" title="Exportar pedidos a CSV">
-          <span>📥 CSV</span>
-        </button>
-
         <!-- Usuario en sesión (US-007) -->
         <div class="flex items-center gap-2 bg-slate-800/80 pl-3 pr-1 py-1 rounded-lg border border-slate-700/80">
           <span id="sesion-nombre" class="text-slate-200 font-medium">--</span>
@@ -107,9 +101,21 @@
     </div>
   </header>
 
+  <!-- Navegación por módulos -->
+  <nav class="bg-white border-b border-slate-200 sticky top-[64px] z-40">
+    <div class="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto text-sm" role="tablist" aria-label="Módulos de EcoLogCity">
+      <button data-modulo="dashboard" role="tab" class="tab-modulo">📊 Dashboard</button>
+      <button data-modulo="pedidos" role="tab" class="tab-modulo">📦 Pedidos y Rutas</button>
+      <button data-modulo="flota" role="tab" class="tab-modulo">🚚 Gestión de Flota</button>
+      <button data-modulo="usuarios" data-solo-admin role="tab" class="tab-modulo hidden">👥 Usuarios</button>
+    </div>
+  </nav>
+
   <!-- Main Workspace Container -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
+    <!-- Módulo Dashboard (US-006) -->
+    <section id="modulo-dashboard" data-modulo-panel class="hidden space-y-6" role="tabpanel">
     <!-- KPI Summary Cards with Sustainability Metrics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       
@@ -185,7 +191,25 @@
 
     </div>
 
-    
+    <!-- Resúmenes del dashboard (US-006) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+        <h3 class="text-sm font-bold text-slate-900">Pedidos por estado</h3>
+        <div id="resumen-estados" class="mt-4 space-y-3 text-xs"></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+        <h3 class="text-sm font-bold text-slate-900">Pedidos por distrito</h3>
+        <div id="resumen-distritos" class="mt-4 space-y-3 text-xs"></div>
+      </div>
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+        <h3 class="text-sm font-bold text-slate-900">Flota activa</h3>
+        <dl id="resumen-flota" class="mt-4 space-y-2.5 text-xs"></dl>
+      </div>
+    </div>
+    </section>
+
+    <!-- Módulo Pedidos y Rutas (US-001 a US-005, US-009) -->
+    <section id="modulo-pedidos" data-modulo-panel class="hidden space-y-6" role="tabpanel">
     <!-- Motor de Optimización de Rutas (US-003) - Solo Administrador -->
     <div data-solo-admin class="hidden bg-gradient-to-r from-indigo-50 to-white p-6 rounded-2xl shadow-sm border border-indigo-200 mb-6 flex justify-between items-center">
         <div>
@@ -447,6 +471,10 @@
             <option value="San Agustín de Cajas">San Agustín de Cajas</option>
           </select>
 
+          <button id="btn-exportar-csv" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold transition" title="Exportar pedidos a CSV">
+            📥 CSV
+          </button>
+
           <!-- Botón Refrescar -->
           <button id="btn-refrescar" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 transition">
             <span>🔄</span>
@@ -481,28 +509,16 @@
       </div>
 
     </div>
+    </section>
 
-  </main>
-
-  <!-- Modal Flota de Vehículos (RF-01) -->
-  <div id="modal-flota" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
-      <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-        <div>
-          <h3 class="text-base font-bold flex items-center gap-2">
-            <span>🚚 Gestión de Flota</span>
-            <span class="text-xs font-normal text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
-              DistriRápido S.A.C.
-            </span>
-          </h3>
-          <p class="text-xs text-slate-400 mt-0.5">Capacidades de peso, volumen y tipo de combustible para Green VRP</p>
-        </div>
-        <button id="btn-cerrar-flota" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+    <!-- Módulo Gestión de Flota (US-008) -->
+    <section id="modulo-flota" data-modulo-panel class="hidden space-y-5" role="tabpanel">
+      <div>
+        <h2 class="text-base font-bold text-slate-900">🚚 Gestión de Flota</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Capacidades de peso, volumen y tipo de combustible que usa el motor de rutas (solo vehículos activos).</p>
       </div>
-
-      <div class="p-6 max-h-[70vh] overflow-y-auto space-y-5">
         <!-- Registro de vehículo: solo Administrador -->
-        <form id="form-vehiculo" data-solo-admin class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+        <form id="form-vehiculo" data-solo-admin class="hidden bg-white shadow-sm border border-slate-200/80 rounded-2xl p-5 space-y-3">
           <h4 class="text-sm font-bold text-slate-900">➕ Registrar vehículo</h4>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <input id="v-placa" required maxlength="10" placeholder="Placa (W2X-780)" class="px-3 py-2 border border-slate-300 rounded-lg font-mono uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
@@ -526,18 +542,67 @@
           </div>
         </form>
 
-        <div id="flota-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="text-center py-6 text-slate-400 col-span-2">Cargando vehículos de la base de datos...</div>
+        <div id="flota-lista" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="text-center py-6 text-slate-400 col-span-full">Cargando vehículos de la base de datos...</div>
         </div>
+    </section>
+
+    <!-- Módulo Usuarios (US-010) - Solo Administrador -->
+    <section id="modulo-usuarios" data-modulo-panel class="hidden space-y-6" role="tabpanel">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div class="pb-3.5 border-b border-slate-100">
+          <h2 class="text-base font-bold text-slate-900">➕ Registrar usuario</h2>
+          <p class="text-xs text-slate-500 mt-0.5">El usuario podrá registrar pedidos y verá solo los suyos; el administrador tiene acceso a todos los módulos.</p>
+        </div>
+        <form id="form-usuario" class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 text-xs items-end">
+          <div class="md:col-span-1">
+            <label for="u-nombre" class="block font-semibold text-slate-700 mb-1">Nombre completo *</label>
+            <input id="u-nombre" required minlength="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+          <div class="md:col-span-1">
+            <label for="u-email" class="block font-semibold text-slate-700 mb-1">Correo *</label>
+            <input id="u-email" type="email" required autocomplete="off" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+          <div class="md:col-span-1">
+            <label for="u-password" class="block font-semibold text-slate-700 mb-1">Contraseña * (mín. 8)</label>
+            <div class="relative">
+              <input id="u-password" type="password" required minlength="8" autocomplete="new-password" class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+              <button type="button" data-visor-para="u-password" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700 transition" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"></button>
+            </div>
+          </div>
+          <div class="md:col-span-1">
+            <label for="u-rol" class="block font-semibold text-slate-700 mb-1">Rol</label>
+            <select id="u-rol" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
+              <option value="USUARIO">Usuario</option>
+              <option value="ADMIN">Administrador</option>
+            </select>
+          </div>
+          <button type="submit" id="btn-guardar-usuario" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition">Guardar usuario</button>
+        </form>
       </div>
 
-      <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 text-right">
-        <button id="btn-cerrar-flota-footer" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold transition">
-          Cerrar
-        </button>
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <h2 class="text-base font-bold text-slate-900 pb-3.5 mb-4 border-b border-slate-100">👥 Usuarios del sistema</h2>
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-3.5">Nombre</th>
+                <th class="py-3 px-3.5">Correo</th>
+                <th class="py-3 px-3.5">Rol</th>
+                <th class="py-3 px-3.5">Pedidos</th>
+                <th class="py-3 px-3.5">Estado</th>
+                <th class="py-3 px-3.5 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="usuarios-tbody" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="text-center py-8 text-slate-400">Cargando usuarios...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <!-- Footer Institucional -->
   <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">

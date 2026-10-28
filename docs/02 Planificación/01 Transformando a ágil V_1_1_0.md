@@ -91,6 +91,15 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **quiero** ver solo los pedidos que yo registré, mientras el administrador ve el directorio general,  
 **para** gestionar mis entregas sin mezclarlas con las de otros operadores.  
 
+### Historia de Usuario 10
+**ID:** US-010  
+**Título:** Gestión de Usuarios  
+**Épica Relacionada:** EP-03 [Infraestructura y Arquitectura Core]  
+**Redacción:**  
+**Como** Administrador Logístico,  
+**quiero** registrar cuentas, cambiar su rol y activarlas o desactivarlas,  
+**para** controlar quién accede a EcoLogCity sin depender de cambios en la base de datos.  
+
 ### Historia Técnica (Enabler) 1
 **ID:** EN-001  
 **Título:** Integración Base de Datos Espacial PostGIS  
@@ -140,6 +149,17 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **Dado** que el Administrador inició sesión  
 **Cuando** abre el directorio de pedidos  
 **Entonces** ve los pedidos de todos los usuarios con la columna "Registrado por".
+
+### US-010: Gestión de Usuarios
+**Escenario 1: Registro de una cuenta**  
+**Dado** que el Administrador está en el módulo "Usuarios"  
+**Cuando** registra un nombre, un correo válido, una contraseña de al menos 8 caracteres y un rol  
+**Entonces** la cuenta aparece en la lista y la persona puede iniciar sesión con ella.  
+
+**Escenario 2: Protección de la propia cuenta**  
+**Dado** que el Administrador ve su propia cuenta en la lista  
+**Cuando** intenta desactivarla o quitarle el rol de administrador  
+**Entonces** el sistema lo impide y muestra el motivo.
 
 ### EN-001: Integración Base de Datos Espacial PostGIS
 **Escenario 1: Ejecución de consultas espaciales**  

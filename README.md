@@ -56,7 +56,7 @@ Desarrollar e implementar un PMV web que optimice las rutas de distribución urb
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        MÓDULOS DE ECOLogCity                           │
 ├────────────────────────────────────────────────────────────────────────┤
-│  [1] Acceso y Roles         : Login con roles Admin y Usuario.         │
+│  [1] Acceso y Usuarios      : Login, roles y gestión de cuentas.       │
 │  [2] Gestión de Pedidos     : Registro, geocodificación y ventanas.    │
 │  [3] Gestión de Flota       : Alta, baja y capacidades de vehículos.   │
 │  [4] Motor de Optimización  : Heurística VRPTW / Green VRP.            │

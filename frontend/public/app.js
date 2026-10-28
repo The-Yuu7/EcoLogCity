@@ -24,10 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const sesion = obtenerSesion();
   if (!sesion) return;
   aplicarPermisosDeRol(sesion.usuario);
+  activarVisoresDeContrasena();
 
   initMap();
   cargarEstadisticas();
   cargarPedidos();
+
+  // Navegación por módulos (Dashboard, Pedidos y Rutas, Gestión de Flota, Usuarios)
+  document.querySelectorAll('[data-modulo]').forEach(tab => {
+    tab.addEventListener('click', () => mostrarModulo(tab.dataset.modulo));
+  });
+  window.addEventListener('hashchange', () => mostrarModulo(location.hash.slice(1)));
+  mostrarModulo(location.hash.slice(1));
 
   // Eventos de botones principales
   document.getElementById('btn-geocodificar').addEventListener('click', geocodificarDireccionActual);
@@ -61,20 +69,44 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('input-buscar').addEventListener('input', filtrarYRenderizarTabla);
   document.getElementById('filtro-distrito').addEventListener('change', filtrarYRenderizarTabla);
 
-  // Modal de Flota (RF-01)
-  const modalFlota = document.getElementById('modal-flota');
-  document.getElementById('btn-abrir-flota').addEventListener('click', abrirModalFlota);
-  document.getElementById('btn-cerrar-flota').addEventListener('click', () => modalFlota.classList.add('hidden'));
-  document.getElementById('btn-cerrar-flota-footer').addEventListener('click', () => modalFlota.classList.add('hidden'));
-
-  // Registro de vehículos (solo administrador)
+  // Registro de vehículos y usuarios (solo administrador)
   document.getElementById('form-vehiculo').addEventListener('submit', registrarVehiculo);
+  document.getElementById('form-usuario').addEventListener('submit', registrarUsuario);
 
   document.getElementById('btn-cerrar-sesion').addEventListener('click', cerrarSesion);
 
   // Exportar a CSV
   document.getElementById('btn-exportar-csv').addEventListener('click', exportarPedidosCSV);
 });
+
+const MODULOS = ['dashboard', 'pedidos', 'flota', 'usuarios'];
+const MODULOS_SOLO_ADMIN = ['usuarios'];
+
+/**
+ * Muestra un módulo y oculta los demás. Un módulo desconocido o sin permiso abre el Dashboard.
+ */
+function mostrarModulo(nombre) {
+  if (!MODULOS.includes(nombre) || (MODULOS_SOLO_ADMIN.includes(nombre) && !esAdmin())) {
+    nombre = 'dashboard';
+  }
+  if (location.hash.slice(1) !== nombre) history.replaceState(null, '', `#${nombre}`);
+
+  document.querySelectorAll('[data-modulo-panel]').forEach(panel => {
+    panel.classList.toggle('hidden', panel.id !== `modulo-${nombre}`);
+  });
+  document.querySelectorAll('[data-modulo]').forEach(tab => {
+    tab.setAttribute('aria-selected', String(tab.dataset.modulo === nombre));
+  });
+
+  // Leaflet calcula mal su tamaño si el mapa se creó estando oculto
+  if (nombre === 'pedidos' && map) setTimeout(() => map.invalidateSize(), 0);
+  if (nombre === 'flota') cargarFlota();
+  if (nombre === 'usuarios') cargarUsuarios();
+}
+
+const escaparHtml = (texto) => String(texto ?? '').replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
 
 /**
  * Muestra el usuario en sesión y ajusta la interfaz según su rol:
@@ -407,9 +439,58 @@ async function cargarEstadisticas() {
       document.getElementById('kpi-costo-combustible').textContent = `S/ ${costoDiésel}`;
       document.getElementById('kpi-ahorro-soles').textContent = `~S/ ${ahorroSoles} (15%)`;
     }
+    renderizarResumenFlota(flota);
   } catch (e) {
     console.error('Error cargando KPIs:', e);
   }
+}
+
+/**
+ * Resumen de la flota activa para el Dashboard
+ */
+function renderizarResumenFlota(flota) {
+  const suma = (campo) => flota.reduce((acc, v) => acc + parseFloat(v[campo]), 0);
+  const gnv = flota.filter(v => v.tipo_combustible === 'GNV').length;
+  const filas = [
+    ['Vehículos activos', flota.length],
+    ['Capacidad total', `${suma('capacidad_peso_kg').toLocaleString('es-PE')} kg`],
+    ['Volumen total', `${suma('capacidad_volumen_m3').toFixed(1)} m³`],
+    ['Diésel / GNV', `${flota.length - gnv} / ${gnv}`],
+  ];
+  document.getElementById('resumen-flota').innerHTML = filas.map(([etiqueta, valor]) => `
+    <div class="flex justify-between border-b border-slate-100 pb-2 last:border-0">
+      <dt class="text-slate-500">${etiqueta}</dt>
+      <dd class="font-semibold text-slate-900">${valor}</dd>
+    </div>`).join('');
+}
+
+/**
+ * Barras horizontales de conteo (pedidos por estado y por distrito) para el Dashboard
+ */
+function renderizarBarras(contenedorId, conteos, colorBarra) {
+  const contenedor = document.getElementById(contenedorId);
+  const entradas = Object.entries(conteos).sort((a, b) => b[1] - a[1]);
+  if (entradas.length === 0) {
+    contenedor.innerHTML = '<p class="text-slate-400">Sin pedidos registrados.</p>';
+    return;
+  }
+  const maximo = entradas[0][1];
+  contenedor.innerHTML = entradas.map(([etiqueta, cantidad]) => `
+    <div>
+      <div class="flex justify-between mb-1">
+        <span class="text-slate-600">${escaparHtml(etiqueta.replace('_', ' '))}</span>
+        <span class="font-semibold text-slate-900">${cantidad}</span>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-1.5">
+        <div class="${colorBarra} h-1.5 rounded-full" style="width: ${Math.round((cantidad / maximo) * 100)}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderizarResumenPedidos(pedidos) {
+  const contar = (clave, lista) => lista.reduce((acc, p) => ({ ...acc, [p[clave]]: (acc[p[clave]] || 0) + 1 }), {});
+  renderizarBarras('resumen-estados', contar('estado', pedidos), 'bg-indigo-500');
+  renderizarBarras('resumen-distritos', contar('distrito', pedidos.filter(p => p.estado !== 'CANCELADO')), 'bg-emerald-500');
 }
 
 /**
@@ -431,6 +512,7 @@ async function cargarPedidos() {
     todosLosPedidos = json.data || [];
     renderizarMarcadoresEnMapa(todosLosPedidos);
     filtrarYRenderizarTabla();
+    renderizarResumenPedidos(todosLosPedidos);
 
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="${columnasTabla()}" class="text-center py-8 text-red-500">Error de comunicación con el backend</td></tr>`;
@@ -649,18 +731,13 @@ window.cancelarPedido = async function (id) {
 };
 
 /**
- * Abre el modal de Gestión de Flota (US-008).
+ * Carga el módulo de Gestión de Flota (US-008).
  * El administrador ve también los vehículos dados de baja y puede registrar o cambiar su estado.
  */
-async function abrirModalFlota() {
-  document.getElementById('modal-flota').classList.remove('hidden');
-  await cargarFlota();
-}
-
 async function cargarFlota() {
   const lista = document.getElementById('flota-lista');
   const admin = esAdmin();
-  lista.innerHTML = '<div class="text-center py-6 text-slate-400 col-span-2">Consultando vehículos de la flota...</div>';
+  lista.innerHTML = '<div class="text-center py-6 text-slate-400 col-span-full">Consultando vehículos de la flota...</div>';
 
   try {
     const res = await apiFetch(`${API_BASE}/vehiculos${admin ? '?todos=true' : ''}`);
@@ -668,7 +745,7 @@ async function cargarFlota() {
     const vehiculos = json.data || [];
 
     if (vehiculos.length === 0) {
-      lista.innerHTML = '<div class="text-center py-6 text-slate-400 col-span-2">No hay vehículos registrados en la flota.</div>';
+      lista.innerHTML = '<div class="text-center py-6 text-slate-400 col-span-full">No hay vehículos registrados en la flota.</div>';
       return;
     }
 
@@ -720,7 +797,7 @@ async function cargarFlota() {
     });
 
   } catch (err) {
-    lista.innerHTML = '<div class="text-center py-6 text-red-500 col-span-2">Error al cargar la flota de vehículos.</div>';
+    lista.innerHTML = '<div class="text-center py-6 text-red-500 col-span-full">Error al cargar la flota de vehículos.</div>';
   }
 }
 
@@ -787,6 +864,110 @@ window.cambiarEstadoVehiculo = async function (id, activo) {
     cargarEstadisticas();
   } catch (err) {
     alert('Error al actualizar el vehículo');
+  }
+};
+
+/**
+ * Carga el módulo de Usuarios (US-010, solo administrador)
+ */
+async function cargarUsuarios() {
+  const tbody = document.getElementById('usuarios-tbody');
+  const miId = obtenerSesion().usuario.id;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">Cargando usuarios...</td></tr>';
+
+  try {
+    const res = await apiFetch(`${API_BASE}/usuarios`);
+    const json = await res.json();
+    if (!json.ok) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">${escaparHtml(json.error)}</td></tr>`;
+      return;
+    }
+    if (json.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">No hay usuarios registrados.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = json.data.map(u => {
+      const esYo = u.id === miId;
+      const rolBadge = u.rol === 'ADMIN'
+        ? '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">ADMIN</span>'
+        : '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">USUARIO</span>';
+      const estadoBadge = u.activo
+        ? '<span class="text-emerald-700 font-semibold">Activo</span>'
+        : '<span class="text-slate-400 font-semibold">Inactivo</span>';
+      const acciones = esYo
+        ? '<span class="text-[11px] text-slate-400 italic">Su cuenta</span>'
+        : `<button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+             onclick="actualizarUsuario('${u.id}', { rol: '${u.rol === 'ADMIN' ? 'USUARIO' : 'ADMIN'}' })">
+             ${u.rol === 'ADMIN' ? 'Hacer usuario' : 'Hacer admin'}
+           </button>
+           <button class="${u.activo ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'} px-2.5 py-1 rounded-md text-[11px] font-semibold transition"
+             onclick="actualizarUsuario('${u.id}', { activo: ${!u.activo} })">
+             ${u.activo ? 'Desactivar' : 'Activar'}
+           </button>`;
+      return `
+        <tr class="hover:bg-slate-50/80 ${u.activo ? '' : 'opacity-60'}">
+          <td class="py-3 px-3.5 font-bold text-slate-900">${escaparHtml(u.nombre_completo)}</td>
+          <td class="py-3 px-3.5">${escaparHtml(u.email)}</td>
+          <td class="py-3 px-3.5">${rolBadge}</td>
+          <td class="py-3 px-3.5 font-mono">${u.pedidos_registrados}</td>
+          <td class="py-3 px-3.5">${estadoBadge}</td>
+          <td class="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">${acciones}</td>
+        </tr>`;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">Error al cargar los usuarios.</td></tr>';
+  }
+}
+
+async function registrarUsuario(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-guardar-usuario');
+  btn.disabled = true;
+
+  try {
+    const res = await apiFetch(`${API_BASE}/usuarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre_completo: document.getElementById('u-nombre').value.trim(),
+        email: document.getElementById('u-email').value.trim(),
+        password: document.getElementById('u-password').value,
+        rol: document.getElementById('u-rol').value,
+      }),
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      const detalle = json.detalles ? `\n${json.detalles.map(d => `• ${d.mensaje}`).join('\n')}` : '';
+      alert(`No se pudo registrar el usuario: ${json.error}${detalle}`);
+      return;
+    }
+    document.getElementById('form-usuario').reset();
+    await cargarUsuarios();
+  } catch (err) {
+    alert('Error al registrar el usuario');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+window.actualizarUsuario = async function (id, cambios) {
+  if (cambios.activo === false && !confirm('¿Desactivar esta cuenta? La persona ya no podrá iniciar sesión.')) return;
+
+  try {
+    const res = await apiFetch(`${API_BASE}/usuarios/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cambios),
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      alert(`No se pudo actualizar el usuario: ${json.error}`);
+      return;
+    }
+    await cargarUsuarios();
+  } catch (err) {
+    alert('Error al actualizar el usuario');
   }
 };
 

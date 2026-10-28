@@ -18,6 +18,11 @@ const {
   handleCrearVehiculo,
   handleCambiarEstadoVehiculo,
 } = require('../controllers/vehiculoController');
+const {
+  handleListarUsuarios,
+  handleCrearUsuario,
+  handleActualizarUsuario,
+} = require('../controllers/usuarioController');
 
 // Health check (público)
 router.get('/health', (req, res) => {
@@ -54,5 +59,10 @@ router.post('/rutas/optimizar', requireRole(ROLES.ADMIN), handleOptimizarRutas);
 router.get('/vehiculos', handleListarVehiculos);
 router.post('/vehiculos', requireRole(ROLES.ADMIN), handleCrearVehiculo);
 router.patch('/vehiculos/:id/estado', requireRole(ROLES.ADMIN), handleCambiarEstadoVehiculo);
+
+// Gestión de Usuarios (US-010): solo administrador
+router.get('/usuarios', requireRole(ROLES.ADMIN), handleListarUsuarios);
+router.post('/usuarios', requireRole(ROLES.ADMIN), handleCrearUsuario);
+router.patch('/usuarios/:id', requireRole(ROLES.ADMIN), handleActualizarUsuario);
 
 module.exports = router;
