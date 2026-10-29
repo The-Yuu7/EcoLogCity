@@ -574,6 +574,24 @@
             <span id="rutas-actualizado" class="text-xs text-slate-500"></span>
           </div>
           <div id="rutas-resumen" class="grid grid-cols-3 gap-2 mb-3"></div>
+
+          <!-- Filtros del directorio de rutas -->
+          <div class="bg-white rounded-2xl p-3 mb-3 space-y-2">
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4"/></svg></span>
+              <input id="filtro-ruta-texto" type="search" placeholder="Buscar cliente, dirección o código" aria-label="Buscar parada"
+                class="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+            </div>
+            <div class="grid grid-cols-[1fr_1fr_auto] gap-2">
+              <select id="filtro-ruta-distrito" aria-label="Filtrar por distrito" class="px-3 py-2 text-xs border border-slate-200 bg-slate-50 focus:outline-none">
+                <option value="TODOS">Todos los distritos</option>
+              </select>
+              <select id="filtro-ruta-vehiculo" aria-label="Filtrar por vehículo" class="px-3 py-2 text-xs border border-slate-200 bg-slate-50 focus:outline-none">
+                <option value="TODOS">Todos los vehículos</option>
+              </select>
+              <button id="btn-limpiar-filtros-ruta" class="text-xs text-slate-600 hover:text-slate-900 px-2" title="Quitar filtros">Limpiar</button>
+            </div>
+          </div>
           <div id="rutas-lista" class="flex-1 overflow-y-auto space-y-3 pr-1 pb-1">
             <div class="bg-white rounded-2xl p-5 text-sm text-slate-400">Planificando rutas...</div>
           </div>

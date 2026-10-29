@@ -1117,7 +1117,10 @@ let singleRouteLayerGroup = L.layerGroup();
 let mapaRutas = null;
 let capaRutas = null;
 let planRutas = null;
+// Índice de la ruta abierta; null = ninguna seleccionada (el mapa queda vacío)
 let rutaSeleccionada = 0;
+const filtrosRuta = { distrito: 'TODOS', vehiculo: 'TODOS', texto: '' };
+const marcadoresParada = new Map();
 const cacheTrazos = new Map();
 
 function initMapaRutas() {
@@ -1129,6 +1132,18 @@ function initMapaRutas() {
     attribution: '© OpenStreetMap contributors | EcoLogCity'
   }).addTo(mapaRutas);
   capaRutas = L.layerGroup().addTo(mapaRutas);
+
+  const texto = document.getElementById('filtro-ruta-texto');
+  texto.addEventListener('input', () => { filtrosRuta.texto = texto.value.trim().toLowerCase(); aplicarFiltrosRuta(); });
+  document.getElementById('filtro-ruta-distrito').addEventListener('change', (e) => { filtrosRuta.distrito = e.target.value; aplicarFiltrosRuta(); });
+  document.getElementById('filtro-ruta-vehiculo').addEventListener('change', (e) => { filtrosRuta.vehiculo = e.target.value; aplicarFiltrosRuta(); });
+  document.getElementById('btn-limpiar-filtros-ruta').addEventListener('click', () => {
+    Object.assign(filtrosRuta, { distrito: 'TODOS', vehiculo: 'TODOS', texto: '' });
+    texto.value = '';
+    document.getElementById('filtro-ruta-distrito').value = 'TODOS';
+    document.getElementById('filtro-ruta-vehiculo').value = 'TODOS';
+    aplicarFiltrosRuta();
+  });
 }
 
 /**
@@ -1148,10 +1163,10 @@ async function cargarRutas() {
       return;
     }
     planRutas = json.data;
-    if (rutaSeleccionada >= planRutas.rutas.length) rutaSeleccionada = 0;
+    if (rutaSeleccionada !== null && rutaSeleccionada >= planRutas.rutas.length) rutaSeleccionada = planRutas.rutas.length ? 0 : null;
+    llenarOpcionesFiltroRuta();
     renderizarResumenRutas();
-    renderizarListaRutas();
-    dibujarRutaSeleccionada();
+    aplicarFiltrosRuta();
   } catch (err) {
     lista.innerHTML = '<div class="bg-white rounded-2xl p-5 text-sm text-red-600">No se pudo obtener el plan de rutas.</div>';
   }
@@ -1159,6 +1174,56 @@ async function cargarRutas() {
 
 const colorRuta = (idx) => MARCA.rutas[idx % MARCA.rutas.length];
 const formatoMinutos = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`);
+const hayFiltroRuta = () => filtrosRuta.distrito !== 'TODOS' || filtrosRuta.texto !== '';
+
+/** Distritos y vehículos presentes en el plan, para los selectores de filtro */
+function llenarOpcionesFiltroRuta() {
+  const distritos = new Set();
+  planRutas.rutas.forEach(r => r.paradas.forEach(p => distritos.add(p.distrito)));
+  planRutas.pedidos_sin_asignar.forEach(p => distritos.add(p.distrito));
+  const llenar = (id, opciones, todos) => {
+    const select = document.getElementById(id);
+    const actual = select.value;
+    select.innerHTML = `<option value="TODOS">${todos}</option>` +
+      opciones.map(([valor, texto]) => `<option value="${escaparHtml(valor)}">${escaparHtml(texto)}</option>`).join('');
+    select.value = opciones.some(([valor]) => valor === actual) ? actual : 'TODOS';
+  };
+  llenar('filtro-ruta-distrito', [...distritos].sort().map(d => [d, d]), 'Todos los distritos');
+  llenar('filtro-ruta-vehiculo', planRutas.rutas.map(r => [r.vehiculo.placa, r.vehiculo.placa]), 'Todos los vehículos');
+  filtrosRuta.distrito = document.getElementById('filtro-ruta-distrito').value;
+  filtrosRuta.vehiculo = document.getElementById('filtro-ruta-vehiculo').value;
+}
+
+/** ¿La parada cumple el filtro de distrito y el texto buscado? */
+function paradaCoincide(p) {
+  if (filtrosRuta.distrito !== 'TODOS' && p.distrito !== filtrosRuta.distrito) return false;
+  if (!filtrosRuta.texto) return true;
+  return [p.cliente, p.direccion, p.codigo].some(v => String(v || '').toLowerCase().includes(filtrosRuta.texto));
+}
+
+/** Paradas de la ruta que pasan el filtro, con su número original dentro de la ruta */
+function paradasVisibles(ruta) {
+  return ruta.paradas.map((p, i) => ({ ...p, numero: i + 1 })).filter(paradaCoincide);
+}
+
+/** Índices de las rutas que se muestran con los filtros actuales */
+function rutasVisibles() {
+  return planRutas.rutas
+    .map((ruta, idx) => idx)
+    .filter(idx => {
+      const ruta = planRutas.rutas[idx];
+      if (filtrosRuta.vehiculo !== 'TODOS' && ruta.vehiculo.placa !== filtrosRuta.vehiculo) return false;
+      return paradasVisibles(ruta).length > 0;
+    });
+}
+
+function aplicarFiltrosRuta() {
+  const visibles = rutasVisibles();
+  // Si la ruta abierta quedó fuera del filtro, se abre la primera visible
+  if (rutaSeleccionada !== null && !visibles.includes(rutaSeleccionada)) rutaSeleccionada = visibles.length ? visibles[0] : null;
+  renderizarListaRutas();
+  dibujarRutaSeleccionada();
+}
 
 function renderizarResumenRutas() {
   const r = planRutas.resumen;
@@ -1181,14 +1246,18 @@ function renderizarResumenRutas() {
  */
 function renderizarListaRutas() {
   const lista = document.getElementById('rutas-lista');
-  const { rutas, pedidos_sin_asignar: sinAsignar, aviso } = planRutas;
+  const { rutas, pedidos_sin_asignar: sinAsignarTodos, aviso } = planRutas;
+  const visibles = rutasVisibles();
 
   if (rutas.length === 0) {
     lista.innerHTML = `<div class="bg-white rounded-2xl p-5 text-sm text-slate-500">${escaparHtml(aviso || 'No hay pedidos pendientes de entrega.')}</div>`;
+  } else if (visibles.length === 0) {
+    lista.innerHTML = '<div class="bg-white rounded-2xl p-5 text-sm text-slate-500">Ninguna ruta coincide con los filtros.</div>';
   } else {
-    lista.innerHTML = rutas.map((ruta, idx) => tarjetaRuta(ruta, idx, idx === rutaSeleccionada)).join('');
+    lista.innerHTML = visibles.map(idx => tarjetaRuta(rutas[idx], idx, idx === rutaSeleccionada)).join('');
   }
 
+  const sinAsignar = filtrosRuta.vehiculo === 'TODOS' ? sinAsignarTodos.filter(paradaCoincide) : [];
   if (sinAsignar.length > 0) {
     lista.innerHTML += `
       <div class="tarjeta-ruta cursor-default">
@@ -1205,36 +1274,53 @@ function renderizarListaRutas() {
       </div>`;
   }
 
+  // Clic en una ruta: la abre y dibuja su trazado; clic en la ruta abierta: la cierra
   lista.querySelectorAll('[data-ruta]').forEach(btn => {
     btn.addEventListener('click', () => {
-      rutaSeleccionada = parseInt(btn.dataset.ruta, 10);
+      const idx = parseInt(btn.dataset.ruta, 10);
+      rutaSeleccionada = rutaSeleccionada === idx ? null : idx;
       renderizarListaRutas();
       dibujarRutaSeleccionada();
     });
+  });
+  lista.querySelectorAll('[data-parada]').forEach(btn => {
+    btn.addEventListener('click', () => enfocarParada(btn.dataset.parada));
   });
 }
 
 function tarjetaRuta(ruta, idx, abierta) {
   const v = ruta.vehiculo;
-  const ultima = ruta.paradas[ruta.paradas.length - 1];
+  const visibles = paradasVisibles(ruta);
+  const distritos = [...new Set(ruta.paradas.map(p => p.distrito))];
+  const textoDistritos = distritos.slice(0, 2).join(', ') + (distritos.length > 2 ? ` +${distritos.length - 2}` : '');
+  const textoParadas = hayFiltroRuta()
+    ? `${visibles.length} de ${ruta.paradas.length} paradas`
+    : `${ruta.paradas.length} ${ruta.paradas.length === 1 ? 'parada' : 'paradas'}`;
+
   const cabecera = `
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0">
-        <div class="text-[15px] font-medium text-slate-900 truncate">Ruta ${idx + 1} · ${escaparHtml(ultima.distrito)}</div>
-        <div class="text-xs text-slate-500">Vehículo ${escaparHtml(v.placa)} · ${ruta.paradas.length} ${ruta.paradas.length === 1 ? 'parada' : 'paradas'}</div>
-      </div>
-      <span class="pastilla pastilla-celeste">Planificada</span>
-    </div>`;
+    <span class="flex items-start justify-between gap-3 w-full">
+      <span class="min-w-0">
+        <span class="flex items-center gap-2 text-[15px] font-medium text-slate-900">
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${colorRuta(idx)}"></span>
+          <span class="truncate">Ruta ${idx + 1} · ${escaparHtml(v.placa)}</span>
+        </span>
+        <span class="flex text-xs text-slate-500 gap-1"><span class="truncate">${escaparHtml(textoDistritos)}</span><span class="shrink-0">· ${textoParadas}</span></span>
+      </span>
+      <span class="flex items-center gap-2 shrink-0">
+        <span class="pastilla pastilla-celeste">Planificada</span>
+        <svg class="w-4 h-4 text-slate-400 transition-transform ${abierta ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+      </span>
+    </span>`;
 
   if (!abierta) {
-    return `<button class="tarjeta-ruta" data-ruta="${idx}" aria-expanded="false">${cabecera}</button>`;
+    return `<button class="tarjeta-ruta" data-ruta="${idx}" aria-expanded="false" title="Ver trazado de la ruta">${cabecera}</button>`;
   }
 
   const dato = (etiqueta, valor) => `
     <div><div class="text-[11px] text-slate-500">${etiqueta}</div><div class="text-xs font-medium text-slate-900">${valor}</div></div>`;
   return `
     <div class="tarjeta-ruta cursor-default" aria-expanded="true">
-      ${cabecera}
+      <button class="w-full text-left" data-ruta="${idx}" title="Cerrar ruta">${cabecera}</button>
       <div class="mt-4">
         <div class="flex justify-between text-xs text-slate-600 mb-1.5"><span>Ocupación</span><span>${ruta.ocupacion_pct}%</span></div>
         <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-slate-900 h-1.5 rounded-full" style="width:${Math.min(100, ruta.ocupacion_pct)}%"></div></div>
@@ -1244,12 +1330,14 @@ function tarjetaRuta(ruta, idx, abierta) {
         ${dato('Carga', `${ruta.peso_total_kg} kg`)}
         ${dato('Tiempo est.', formatoMinutos(ruta.tiempo_estimado_min))}
       </div>
-      <ol class="mt-4 space-y-2">
-        ${ruta.paradas.map((p, i) => `
-          <li class="flex items-center gap-3 text-xs">
-            <span class="h-6 w-6 shrink-0 rounded-full text-white flex items-center justify-center text-[11px]" style="background:${colorRuta(idx)}">${i + 1}</span>
-            <span class="min-w-0 flex-1"><span class="block truncate font-medium text-slate-900">${escaparHtml(p.cliente)}</span><span class="block truncate text-slate-500">${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</span></span>
-            <span class="shrink-0 text-slate-500">${String(p.ventana_inicio).slice(0, 5)}</span>
+      <ol class="mt-4 space-y-1">
+        ${visibles.map(p => `
+          <li>
+            <button class="w-full flex items-center gap-3 text-xs text-left rounded-xl px-2 py-1.5 -mx-2 hover:bg-slate-100 transition" data-parada="${escaparHtml(p.id)}" title="Ver en el mapa">
+              <span class="h-6 w-6 shrink-0 rounded-full text-white flex items-center justify-center text-[11px]" style="background:${colorRuta(idx)}">${p.numero}</span>
+              <span class="min-w-0 flex-1"><span class="block truncate font-medium text-slate-900">${escaparHtml(p.cliente)}</span><span class="block truncate text-slate-500">${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</span></span>
+              <span class="shrink-0 text-slate-500">${String(p.ventana_inicio).slice(0, 5)}</span>
+            </button>
           </li>`).join('')}
       </ol>
       <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
@@ -1260,6 +1348,14 @@ function tarjetaRuta(ruta, idx, abierta) {
         </div>
       </div>
     </div>`;
+}
+
+/** Centra el mapa en una parada y abre su etiqueta */
+function enfocarParada(id) {
+  const marcador = marcadoresParada.get(id);
+  if (!marcador) return;
+  mapaRutas.flyTo(marcador.getLatLng(), Math.max(mapaRutas.getZoom(), 16), { duration: 0.6 });
+  marcador.openPopup();
 }
 
 /** Obtiene el trazado por calles desde OSRM (con caché); si falla, usa líneas rectas */
@@ -1280,36 +1376,41 @@ async function trazadoRuta(puntos) {
 }
 
 /**
- * Dibuja la ruta seleccionada (línea naranja) sobre las demás (navy tenue),
- * con el almacén, las paradas numeradas y la tarjeta de detalle.
+ * Dibuja solo la ruta seleccionada: almacén → paradas visibles (según filtros) → almacén.
+ * Sin ruta seleccionada el mapa queda vacío con una indicación.
  */
-async function dibujarRutaSeleccionada() {
+function dibujarRutaSeleccionada() {
   capaRutas.clearLayers();
+  marcadoresParada.clear();
   const tarjeta = document.getElementById('tarjeta-ruta');
   const { rutas, almacen } = planRutas;
-  if (rutas.length === 0) {
-    tarjeta.classList.add('hidden');
+  const base = [almacen.lat, almacen.lon];
+
+  if (rutas.length === 0 || rutaSeleccionada === null) {
+    if (rutas.length === 0) {
+      tarjeta.classList.add('hidden');
+      return;
+    }
+    tarjeta.innerHTML = `
+      <div class="flex items-center gap-3 text-sm text-slate-600">
+        <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900">${svgIcono('mapa', 16)}</span>
+        Seleccione una ruta de la lista para ver su trazado en el mapa.
+      </div>`;
+    tarjeta.classList.remove('hidden');
     return;
   }
 
-  const base = [almacen.lat, almacen.lon];
-  const puntosDe = (ruta) => [base, ...ruta.paradas.map(p => [parseFloat(p.lat), parseFloat(p.lon)]), base];
-
-  // Rutas no seleccionadas: solo como contexto
-  rutas.forEach((ruta, idx) => {
-    if (idx !== rutaSeleccionada) {
-      L.polyline(puntosDe(ruta), { color: MARCA.navy, weight: 2, opacity: 0.18, dashArray: '2, 6' }).addTo(capaRutas);
-    }
-  });
-
   const ruta = rutas[rutaSeleccionada];
   const color = colorRuta(rutaSeleccionada);
-  const puntos = puntosDe(ruta);
+  const paradas = paradasVisibles(ruta);
+  const puntos = [base, ...paradas.map(p => [parseFloat(p.lat), parseFloat(p.lon)]), base];
+
   // Primero líneas rectas para que el mapa responda al instante; luego el trazado por calles
   const linea = L.polyline(puntos, { color, weight: 4, opacity: 0.95, lineCap: 'round', dashArray: '2, 8' }).addTo(capaRutas);
   const seleccion = rutaSeleccionada;
+  const filtroAlDibujar = JSON.stringify(filtrosRuta);
   trazadoRuta(puntos).then(trazo => {
-    if (seleccion !== rutaSeleccionada || !capaRutas.hasLayer(linea)) return;
+    if (seleccion !== rutaSeleccionada || filtroAlDibujar !== JSON.stringify(filtrosRuta) || !capaRutas.hasLayer(linea)) return;
     linea.setLatLngs(trazo);
     linea.setStyle({ dashArray: null });
   });
@@ -1318,35 +1419,37 @@ async function dibujarRutaSeleccionada() {
     .addTo(capaRutas)
     .bindPopup('<div style="font-weight:500">Almacén Central DistriRápido</div><div style="opacity:.75">Salida y retorno de la flota</div>', OPCIONES_POPUP);
 
-  ruta.paradas.forEach((p, i) => {
+  paradas.forEach(p => {
     const icono = L.divIcon({
       className: '',
-      html: `<div style="background:${color};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:3px solid #fff;box-shadow:0 3px 8px rgba(36,46,66,.3)">${i + 1}</div>`,
+      html: `<div style="background:${color};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:3px solid #fff;box-shadow:0 3px 8px rgba(36,46,66,.3)">${p.numero}</div>`,
       iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14],
     });
     const m = L.marker([parseFloat(p.lat), parseFloat(p.lon)], { icon: icono }).addTo(capaRutas);
-    m.bindPopup(`<div style="font-weight:500">${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</div><div style="opacity:.75">${escaparHtml(p.cliente)} · ${p.peso_kg} kg</div>`, OPCIONES_POPUP);
-    if (i === ruta.paradas.length - 1) m.openPopup();
+    m.bindPopup(`<div style="font-weight:500">${p.numero}. ${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</div><div style="opacity:.75">${escaparHtml(p.cliente)} · ${p.peso_kg} kg</div>`, OPCIONES_POPUP);
+    marcadoresParada.set(p.id, m);
   });
 
   // El contenedor puede haber cambiado de tamaño (módulo recién mostrado o menú desplegado)
   mapaRutas.invalidateSize();
-  mapaRutas.fitBounds(linea.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [40, 200] });
+  mapaRutas.fitBounds(linea.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [40, 200], maxZoom: 16 });
 
-  const ultima = ruta.paradas[ruta.paradas.length - 1];
+  const ultima = paradas[paradas.length - 1];
+  const cargaVisible = paradas.reduce((acc, p) => acc + parseFloat(p.peso_kg), 0);
+  const filtrado = hayFiltroRuta();
   const dato = (etiqueta, valor) => `
     <div class="min-w-0"><div class="text-[11px] text-slate-500">${etiqueta}</div><div class="text-xs font-medium text-slate-900 truncate">${valor}</div></div>`;
   tarjeta.innerHTML = `
     <div class="flex items-start justify-between gap-3">
       <h3 class="text-xl font-medium text-slate-900">Ruta ${rutaSeleccionada + 1} · ${escaparHtml(ruta.vehiculo.placa)}</h3>
-      <span class="pastilla pastilla-celeste">Planificada</span>
+      <span class="pastilla ${filtrado ? 'pastilla-naranja' : 'pastilla-celeste'}">${filtrado ? 'Filtrada' : 'Planificada'}</span>
     </div>
     <div class="mt-3 grid grid-cols-2 sm:grid-cols-6 gap-3">
       ${dato('Desde', 'Almacén Central')}
-      ${dato('Hasta', `${escaparHtml(ultima.distrito)}`)}
-      ${dato('Paradas', ruta.paradas.length)}
-      ${dato('Carga', `${ruta.peso_total_kg} kg`)}
-      ${dato('Distancia', `${ruta.distancia_estimada_km} km`)}
+      ${dato('Hasta', escaparHtml(ultima.distrito))}
+      ${dato('Paradas', filtrado ? `${paradas.length} de ${ruta.paradas.length}` : ruta.paradas.length)}
+      ${dato('Carga', `${Math.round(cargaVisible * 10) / 10} kg`)}
+      ${dato('Distancia ruta', `${ruta.distancia_estimada_km} km`)}
       ${dato('Tiempo est.', formatoMinutos(ruta.tiempo_estimado_min))}
     </div>`;
   tarjeta.classList.remove('hidden');
