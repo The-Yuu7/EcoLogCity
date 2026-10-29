@@ -91,3 +91,27 @@ input:focus, select:focus, textarea:focus { border-color: #242E42 !important; --
 
 /* Mapa base claro y desaturado, cercano al estilo de la referencia */
 .tiles-claros { filter: grayscale(0.85) brightness(1.06) contrast(0.88); }
+
+/* Riel desplegable: contraído (solo íconos) o expandido (íconos + nombres) */
+#menu-lateral { width: 5rem; transition: width .2s ease, transform .2s ease; }
+#menu-lateral .texto-rail { display: none; }
+#menu-lateral.rail-expandido { width: 15rem; align-items: stretch; padding-left: 1rem; padding-right: 1rem; }
+#menu-lateral.rail-expandido .texto-rail { display: inline; }
+#menu-lateral.rail-expandido nav, #menu-lateral.rail-expandido .parte-inferior-rail { align-items: stretch; }
+#menu-lateral.rail-expandido .item-rail { width: 100%; justify-content: flex-start; gap: 12px; padding: 0 12px; }
+#menu-lateral.rail-expandido .etiqueta-rail { position: static; transform: none; opacity: 1; background: none; color: inherit; padding: 0; font-size: 14px; }
+#menu-lateral.rail-expandido #btn-expandir-menu svg { transform: rotate(180deg); }
+/* En pantallas pequeñas el menú se abre como cajón, siempre con nombres */
+@media (max-width: 1023px) {
+  #menu-lateral { width: 15rem; align-items: stretch; padding-left: 1rem; padding-right: 1rem; }
+  #menu-lateral .texto-rail { display: inline; }
+  #menu-lateral nav, #menu-lateral .parte-inferior-rail { align-items: stretch; }
+  #menu-lateral .item-rail { width: 100%; justify-content: flex-start; gap: 12px; padding: 0 12px; }
+  #menu-lateral .etiqueta-rail { position: static; transform: none; opacity: 1; background: none; color: inherit; padding: 0; font-size: 14px; }
+}
+
+/* Tarjetas del directorio de rutas */
+.tarjeta-ruta { background: #fff; border-radius: 20px; padding: 16px 18px; cursor: pointer; transition: box-shadow .15s; text-align: left; width: 100%; }
+.tarjeta-ruta:hover { box-shadow: 0 4px 16px rgba(36, 46, 66, 0.08); }
+.tarjeta-ruta[aria-expanded="true"] { box-shadow: 0 8px 24px rgba(36, 46, 66, 0.10); }
+#tarjeta-ruta { box-shadow: 0 8px 24px rgba(36, 46, 66, 0.14); }

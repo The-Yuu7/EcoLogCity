@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-menu').addEventListener('click', () => alternarMenu());
   document.getElementById('menu-fondo').addEventListener('click', () => alternarMenu(false));
+  document.getElementById('btn-expandir-menu').addEventListener('click', () => expandirMenu());
+  expandirMenu(leerPreferencia('ecologcity_menu_expandido') === '1');
+  document.getElementById('btn-chip-perfil').addEventListener('click', () => mostrarModulo('perfil'));
+  document.getElementById('form-perfil').addEventListener('submit', guardarPerfil);
   window.addEventListener('hashchange', () => mostrarModulo(location.hash.slice(1)));
   mostrarModulo(location.hash.slice(1));
 
@@ -84,21 +88,25 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-exportar-csv').addEventListener('click', exportarPedidosCSV);
 });
 
-const MODULOS = ['dashboard', 'pedidos', 'flota', 'usuarios'];
-const MODULOS_SOLO_ADMIN = ['usuarios'];
+const MODULOS = ['dashboard', 'pedidos', 'rutas', 'flota', 'usuarios', 'perfil'];
+// El dashboard y el directorio de rutas son vistas de supervisión: solo administrador (US-017)
+const MODULOS_SOLO_ADMIN = ['dashboard', 'rutas', 'usuarios'];
 const TITULOS_MODULO = {
   dashboard: 'Dashboard',
-  pedidos: 'Pedidos y rutas',
+  pedidos: 'Pedidos',
+  rutas: 'Directorio de rutas',
   flota: 'Gestión de flota',
   usuarios: 'Usuarios',
+  perfil: 'Mi perfil',
 };
 
 /**
- * Muestra un módulo y oculta los demás. Un módulo desconocido o sin permiso abre el Dashboard.
+ * Muestra un módulo y oculta los demás. Un módulo desconocido o sin permiso abre
+ * el módulo inicial del rol: Dashboard para el administrador, Pedidos para el usuario.
  */
 function mostrarModulo(nombre) {
   if (!MODULOS.includes(nombre) || (MODULOS_SOLO_ADMIN.includes(nombre) && !esAdmin())) {
-    nombre = 'dashboard';
+    nombre = esAdmin() ? 'dashboard' : 'pedidos';
   }
   if (location.hash.slice(1) !== nombre) history.replaceState(null, '', `#${nombre}`);
 
@@ -117,6 +125,35 @@ function mostrarModulo(nombre) {
   if (nombre === 'pedidos' && map) setTimeout(() => map.invalidateSize(), 0);
   if (nombre === 'flota') cargarFlota();
   if (nombre === 'usuarios') cargarUsuarios();
+  if (nombre === 'rutas') cargarRutas();
+  if (nombre === 'perfil') cargarPerfil();
+}
+
+function leerPreferencia(clave) {
+  try { return localStorage.getItem(clave); } catch { return null; }
+}
+function guardarPreferencia(clave, valor) {
+  try { localStorage.setItem(clave, valor); } catch { /* sin almacenamiento: solo dura esta visita */ }
+}
+
+/**
+ * Despliega o contrae el menú lateral en escritorio (solo íconos o íconos con nombres).
+ * La preferencia se recuerda en este navegador.
+ */
+function expandirMenu(expandir) {
+  const menu = document.getElementById('menu-lateral');
+  const expandido = expandir ?? !menu.classList.contains('rail-expandido');
+  menu.classList.toggle('rail-expandido', expandido);
+  const btn = document.getElementById('btn-expandir-menu');
+  btn.setAttribute('aria-expanded', String(expandido));
+  btn.setAttribute('aria-label', expandido ? 'Contraer menú' : 'Expandir menú');
+  btn.querySelector('.etiqueta-rail').textContent = expandido ? 'Contraer menú' : 'Expandir menú';
+  guardarPreferencia('ecologcity_menu_expandido', expandido ? '1' : '0');
+  // Los mapas deben recalcular su tamaño cuando cambia el ancho del contenido
+  setTimeout(() => {
+    if (map) map.invalidateSize();
+    if (mapaRutas) mapaRutas.invalidateSize();
+  }, 220);
 }
 
 /**
@@ -136,6 +173,7 @@ const ICONOS = {
   pin: 'M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
   mapa: 'M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4zM9 4v13M15 6.5v13',
   cerrar: 'M6 6l12 12M18 6L6 18',
+  camion: 'M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
 };
 const svgIcono = (nombre, tam = 14, color = 'currentColor') =>
   `<svg width="${tam}" height="${tam}" fill="none" stroke="${color}" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="${ICONOS[nombre]}"/></svg>`;
@@ -227,7 +265,7 @@ function initMap() {
   }).addTo(map);
 
   currentMarker.bindPopup(`
-    <div style="font-size: 12px; line-height: 1.45;">
+    <div style="font-size: 12px; line-height: 1.45; min-width: 200px;">
       <div style="font-weight: 500;">Punto del nuevo pedido</div>
       <div style="opacity: .75;">Arrastre el marcador para ajustar la dirección.</div>
     </div>
@@ -406,7 +444,8 @@ async function guardarNuevoPedido(e) {
       return;
     }
 
-    alert(`¡Pedido registrado exitosamente en Huancayo!\nCódigo: ${json.data.codigo_seguimiento}`);
+    const estadoTexto = json.data.estado === 'PLANIFICADO' ? 'ya fue asignado automáticamente a una ruta' : 'quedó registrado y se asignará cuando haya capacidad en la flota';
+    alert(`¡Pedido registrado!\nCódigo: ${json.data.codigo_seguimiento}\nEl pedido ${estadoTexto}.`);
     
     // Limpiar formulario y resetear
     document.getElementById('form-pedido').reset();
@@ -1072,117 +1111,326 @@ function exportarPedidosCSV() {
 
 
 // -------------------------------------------------------------
-// SPRINT 2: MOTOR VRP & TRAZADO EN LEAFLET (OSRM)
+// DIRECTORIO DE RUTAS (US-015): planificación automática, sin botón
 // -------------------------------------------------------------
-let vrpLayerGroup = L.layerGroup();
 let singleRouteLayerGroup = L.layerGroup();
+let mapaRutas = null;
+let capaRutas = null;
+let planRutas = null;
+let rutaSeleccionada = 0;
+const cacheTrazos = new Map();
 
-window.optimizarRutas = async function () {
-  if (!map.hasLayer(vrpLayerGroup)) {
-      vrpLayerGroup.addTo(map);
-  }
-  const btn = document.getElementById('btn-optimizar');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="animate-pulse">Optimizando...</span>';
+function initMapaRutas() {
+  mapaRutas = L.map('mapa-rutas', { zoomControl: false }).setView(HUANCAYO_CENTER, 13);
+  L.control.zoom({ position: 'topright' }).addTo(mapaRutas);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    className: 'tiles-claros',
+    attribution: '© OpenStreetMap contributors | EcoLogCity'
+  }).addTo(mapaRutas);
+  capaRutas = L.layerGroup().addTo(mapaRutas);
+}
+
+/**
+ * Pide el plan vigente al backend. El plan se recalcula solo (al registrar o cancelar
+ * pedidos y al cambiar la flota); aquí solo se consulta y se dibuja.
+ */
+async function cargarRutas() {
+  if (!mapaRutas) initMapaRutas();
+  mapaRutas.invalidateSize();
+  const lista = document.getElementById('rutas-lista');
 
   try {
-    const res = await apiFetch(`${API_BASE}/rutas/optimizar`, { method: 'POST' });
+    const res = await apiFetch(`${API_BASE}/rutas`);
     const json = await res.json();
-
     if (!json.ok) {
-      alert(`Error en Motor VRP: ${json.error}`);
+      lista.innerHTML = `<div class="bg-white rounded-2xl p-5 text-sm text-red-600">${escaparHtml(json.error)}</div>`;
       return;
     }
-
-    const { rutas, resumen, almacen } = json.data;
-
-    // Actualizar Modal de Resumen
-    document.getElementById('vrp-dist').innerText = resumen.distancia_total_km;
-    document.getElementById('vrp-ahorro').innerText = resumen.ahorro_estimado_km;
-    document.getElementById('vrp-co2').innerText = resumen.emisiones_evitadas_kg_co2;
-    document.getElementById('vrp-asignados').innerText = resumen.pedidos_asignados;
-    document.getElementById('vrp-noasignados').innerText = resumen.pedidos_sin_asignar;
-    
-    document.getElementById('vrp-modal').classList.remove('hidden');
-
-    // Limpiar rutas previas del mapa
-    vrpLayerGroup.clearLayers();
-    if(typeof singleRouteLayerGroup !== 'undefined') singleRouteLayerGroup.clearLayers();
-    ordersLayerGroup.clearLayers(); // Ocultar puntos sueltos para mostrar las secuencias limpias
-
-    // Paleta de colores para vehiculos (hasta 5 colores)
-    const colores = MARCA.rutas;
-
-    // Para cada ruta (Vehículo)
-    rutas.forEach(async (rutaObj, idx) => {
-        const color = colores[idx % colores.length];
-        
-        // Armar array de coordenadas para OSRM [lon, lat]
-        const coordString = [];
-        coordString.push(`${almacen.lon},${almacen.lat}`); // Salida
-        
-        rutaObj.paradas.forEach(p => {
-            coordString.push(`${p.lon},${p.lat}`);
-            
-            // Re-dibujar marcador pero con el color del vehículo
-            const m = L.circleMarker([p.lat, p.lon], {
-                radius: 8,
-                fillColor: color,
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.9
-            }).addTo(vrpLayerGroup);
-            
-            m.bindPopup(`<div style="font-weight:500">Pedido ${escaparHtml(p.codigo)}</div><div style="opacity:.75">Vehículo ${escaparHtml(rutaObj.vehiculo.placa)}</div>`, OPCIONES_POPUP);
-        });
-
-        coordString.push(`${almacen.lon},${almacen.lat}`); // Retorno
-
-        // Dibujar Almacén principal
-        L.marker([almacen.lat, almacen.lon], { icon: marcadorCircular('almacen', MARCA.navy, 36) })
-            .addTo(vrpLayerGroup)
-            .bindPopup('<div style="font-weight:500">Almacén Central DistriRápido</div><div style="opacity:.75">Salida y retorno de la flota</div>', OPCIONES_POPUP);
-
-        // Llamar a OSRM Demo API para obtener la polyline real de las calles
-        try {
-            const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordString.join(';')}?overview=full&geometries=geojson`;
-            const osrmRes = await fetch(osrmUrl);
-            const osrmData = await osrmRes.json();
-            
-            if(osrmData.routes && osrmData.routes.length > 0) {
-                const geojsonFeature = osrmData.routes[0].geometry;
-                L.geoJSON(geojsonFeature, {
-                    style: {
-                        color: color,
-                        weight: 4,
-                        opacity: 0.8,
-                        dashArray: '10, 5' // Linea punteada de ruta sugerida
-                    }
-                }).addTo(vrpLayerGroup);
-            }
-        } catch(e) {
-            console.warn("No se pudo conectar a OSRM para trazar las calles, usando fallback de linea recta.");
-            // DRAW FALLBACK STRAIGHT LINES
-            const latlngs = [];
-            latlngs.push([almacen.lat, almacen.lon]);
-            rutaObj.paradas.forEach(p => latlngs.push([p.lat, p.lon]));
-            latlngs.push([almacen.lat, almacen.lon]);
-            L.polyline(latlngs, {color: color, weight: 3, dashArray: '5, 5', opacity: 0.8}).addTo(vrpLayerGroup);
-        }
-    });
-
-    // Actualizar Tablas para reflejar que estan PLANIFICADOS
-    cargarPedidos();
-    cargarEstadisticas();
-
+    planRutas = json.data;
+    if (rutaSeleccionada >= planRutas.rutas.length) rutaSeleccionada = 0;
+    renderizarResumenRutas();
+    renderizarListaRutas();
+    dibujarRutaSeleccionada();
   } catch (err) {
-    alert('Error al conectar con el servidor VRP');
+    lista.innerHTML = '<div class="bg-white rounded-2xl p-5 text-sm text-red-600">No se pudo obtener el plan de rutas.</div>';
+  }
+}
+
+const colorRuta = (idx) => MARCA.rutas[idx % MARCA.rutas.length];
+const formatoMinutos = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m` : `${min} min`);
+
+function renderizarResumenRutas() {
+  const r = planRutas.resumen;
+  const chip = (etiqueta, valor) => `
+    <div class="bg-white rounded-xl px-3 py-2">
+      <div class="text-[11px] text-slate-500">${etiqueta}</div>
+      <div class="text-sm font-medium text-slate-900">${valor}</div>
+    </div>`;
+  document.getElementById('rutas-resumen').innerHTML =
+    chip('Distancia', `${r.distancia_total_km} km`) +
+    chip('Ahorro', `${r.ahorro_estimado_km} km`) +
+    chip('CO₂ evitado', `${r.emisiones_evitadas_kg_co2} kg`);
+  const hora = new Date(planRutas.generado_en).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('rutas-actualizado').textContent = `Actualizado ${hora}`;
+}
+
+/**
+ * Lista de rutas al estilo de la referencia: cada ruta es una tarjeta;
+ * la seleccionada se expande con ocupación, datos y paradas.
+ */
+function renderizarListaRutas() {
+  const lista = document.getElementById('rutas-lista');
+  const { rutas, pedidos_sin_asignar: sinAsignar, aviso } = planRutas;
+
+  if (rutas.length === 0) {
+    lista.innerHTML = `<div class="bg-white rounded-2xl p-5 text-sm text-slate-500">${escaparHtml(aviso || 'No hay pedidos pendientes de entrega.')}</div>`;
+  } else {
+    lista.innerHTML = rutas.map((ruta, idx) => tarjetaRuta(ruta, idx, idx === rutaSeleccionada)).join('');
+  }
+
+  if (sinAsignar.length > 0) {
+    lista.innerHTML += `
+      <div class="tarjeta-ruta cursor-default">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-[15px] font-medium text-slate-900">Pedidos sin asignar</div>
+            <div class="text-xs text-slate-500">No caben en la flota activa</div>
+          </div>
+          <span class="pastilla pastilla-gris">${sinAsignar.length}</span>
+        </div>
+        <ul class="mt-3 space-y-1.5 text-xs text-slate-600">
+          ${sinAsignar.map(p => `<li class="flex justify-between gap-2"><span class="truncate">${escaparHtml(p.cliente)} · ${escaparHtml(p.distrito)}</span><span class="shrink-0">${p.peso_kg} kg</span></li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  lista.querySelectorAll('[data-ruta]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      rutaSeleccionada = parseInt(btn.dataset.ruta, 10);
+      renderizarListaRutas();
+      dibujarRutaSeleccionada();
+    });
+  });
+}
+
+function tarjetaRuta(ruta, idx, abierta) {
+  const v = ruta.vehiculo;
+  const ultima = ruta.paradas[ruta.paradas.length - 1];
+  const cabecera = `
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-[15px] font-medium text-slate-900 truncate">Ruta ${idx + 1} · ${escaparHtml(ultima.distrito)}</div>
+        <div class="text-xs text-slate-500">Vehículo ${escaparHtml(v.placa)} · ${ruta.paradas.length} ${ruta.paradas.length === 1 ? 'parada' : 'paradas'}</div>
+      </div>
+      <span class="pastilla pastilla-celeste">Planificada</span>
+    </div>`;
+
+  if (!abierta) {
+    return `<button class="tarjeta-ruta" data-ruta="${idx}" aria-expanded="false">${cabecera}</button>`;
+  }
+
+  const dato = (etiqueta, valor) => `
+    <div><div class="text-[11px] text-slate-500">${etiqueta}</div><div class="text-xs font-medium text-slate-900">${valor}</div></div>`;
+  return `
+    <div class="tarjeta-ruta cursor-default" aria-expanded="true">
+      ${cabecera}
+      <div class="mt-4">
+        <div class="flex justify-between text-xs text-slate-600 mb-1.5"><span>Ocupación</span><span>${ruta.ocupacion_pct}%</span></div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-slate-900 h-1.5 rounded-full" style="width:${Math.min(100, ruta.ocupacion_pct)}%"></div></div>
+      </div>
+      <div class="mt-4 grid grid-cols-3 gap-2">
+        ${dato('Desde', 'Almacén Central')}
+        ${dato('Carga', `${ruta.peso_total_kg} kg`)}
+        ${dato('Tiempo est.', formatoMinutos(ruta.tiempo_estimado_min))}
+      </div>
+      <ol class="mt-4 space-y-2">
+        ${ruta.paradas.map((p, i) => `
+          <li class="flex items-center gap-3 text-xs">
+            <span class="h-6 w-6 shrink-0 rounded-full text-white flex items-center justify-center text-[11px]" style="background:${colorRuta(idx)}">${i + 1}</span>
+            <span class="min-w-0 flex-1"><span class="block truncate font-medium text-slate-900">${escaparHtml(p.cliente)}</span><span class="block truncate text-slate-500">${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</span></span>
+            <span class="shrink-0 text-slate-500">${String(p.ventana_inicio).slice(0, 5)}</span>
+          </li>`).join('')}
+      </ol>
+      <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
+        <span class="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-900">${svgIcono('camion', 16)}</span>
+        <div class="min-w-0 flex-1 leading-tight">
+          <div class="text-sm font-medium text-slate-900 truncate">${escaparHtml(v.marca || '')} ${escaparHtml(v.modelo || '')}</div>
+          <div class="text-[11px] text-slate-500">${v.tipo_combustible === 'GNV' ? 'GNV' : 'Diésel'} · ${parseFloat(v.capacidad_peso_kg).toFixed(0)} kg</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/** Obtiene el trazado por calles desde OSRM (con caché); si falla, usa líneas rectas */
+async function trazadoRuta(puntos) {
+  const clave = puntos.map(p => p.join(',')).join(';');
+  if (cacheTrazos.has(clave)) return cacheTrazos.get(clave);
+  let trazo = puntos;
+  try {
+    const coords = puntos.map(([lat, lon]) => `${lon},${lat}`).join(';');
+    const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+    const data = await res.json();
+    if (data.routes && data.routes.length > 0) trazo = data.routes[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+  } catch (e) {
+    console.warn('OSRM no disponible, se usan líneas rectas');
+  }
+  cacheTrazos.set(clave, trazo);
+  return trazo;
+}
+
+/**
+ * Dibuja la ruta seleccionada (línea naranja) sobre las demás (navy tenue),
+ * con el almacén, las paradas numeradas y la tarjeta de detalle.
+ */
+async function dibujarRutaSeleccionada() {
+  capaRutas.clearLayers();
+  const tarjeta = document.getElementById('tarjeta-ruta');
+  const { rutas, almacen } = planRutas;
+  if (rutas.length === 0) {
+    tarjeta.classList.add('hidden');
+    return;
+  }
+
+  const base = [almacen.lat, almacen.lon];
+  const puntosDe = (ruta) => [base, ...ruta.paradas.map(p => [parseFloat(p.lat), parseFloat(p.lon)]), base];
+
+  // Rutas no seleccionadas: solo como contexto
+  rutas.forEach((ruta, idx) => {
+    if (idx !== rutaSeleccionada) {
+      L.polyline(puntosDe(ruta), { color: MARCA.navy, weight: 2, opacity: 0.18, dashArray: '2, 6' }).addTo(capaRutas);
+    }
+  });
+
+  const ruta = rutas[rutaSeleccionada];
+  const color = colorRuta(rutaSeleccionada);
+  const puntos = puntosDe(ruta);
+  // Primero líneas rectas para que el mapa responda al instante; luego el trazado por calles
+  const linea = L.polyline(puntos, { color, weight: 4, opacity: 0.95, lineCap: 'round', dashArray: '2, 8' }).addTo(capaRutas);
+  const seleccion = rutaSeleccionada;
+  trazadoRuta(puntos).then(trazo => {
+    if (seleccion !== rutaSeleccionada || !capaRutas.hasLayer(linea)) return;
+    linea.setLatLngs(trazo);
+    linea.setStyle({ dashArray: null });
+  });
+
+  L.marker(base, { icon: marcadorCircular('almacen', MARCA.navy, 36) })
+    .addTo(capaRutas)
+    .bindPopup('<div style="font-weight:500">Almacén Central DistriRápido</div><div style="opacity:.75">Salida y retorno de la flota</div>', OPCIONES_POPUP);
+
+  ruta.paradas.forEach((p, i) => {
+    const icono = L.divIcon({
+      className: '',
+      html: `<div style="background:${color};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;border:3px solid #fff;box-shadow:0 3px 8px rgba(36,46,66,.3)">${i + 1}</div>`,
+      iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -14],
+    });
+    const m = L.marker([parseFloat(p.lat), parseFloat(p.lon)], { icon: icono }).addTo(capaRutas);
+    m.bindPopup(`<div style="font-weight:500">${escaparHtml(p.direccion)}, ${escaparHtml(p.distrito)}</div><div style="opacity:.75">${escaparHtml(p.cliente)} · ${p.peso_kg} kg</div>`, OPCIONES_POPUP);
+    if (i === ruta.paradas.length - 1) m.openPopup();
+  });
+
+  // El contenedor puede haber cambiado de tamaño (módulo recién mostrado o menú desplegado)
+  mapaRutas.invalidateSize();
+  mapaRutas.fitBounds(linea.getBounds(), { paddingTopLeft: [40, 40], paddingBottomRight: [40, 200] });
+
+  const ultima = ruta.paradas[ruta.paradas.length - 1];
+  const dato = (etiqueta, valor) => `
+    <div class="min-w-0"><div class="text-[11px] text-slate-500">${etiqueta}</div><div class="text-xs font-medium text-slate-900 truncate">${valor}</div></div>`;
+  tarjeta.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <h3 class="text-xl font-medium text-slate-900">Ruta ${rutaSeleccionada + 1} · ${escaparHtml(ruta.vehiculo.placa)}</h3>
+      <span class="pastilla pastilla-celeste">Planificada</span>
+    </div>
+    <div class="mt-3 grid grid-cols-2 sm:grid-cols-6 gap-3">
+      ${dato('Desde', 'Almacén Central')}
+      ${dato('Hasta', `${escaparHtml(ultima.distrito)}`)}
+      ${dato('Paradas', ruta.paradas.length)}
+      ${dato('Carga', `${ruta.peso_total_kg} kg`)}
+      ${dato('Distancia', `${ruta.distancia_estimada_km} km`)}
+      ${dato('Tiempo est.', formatoMinutos(ruta.tiempo_estimado_min))}
+    </div>`;
+  tarjeta.classList.remove('hidden');
+}
+
+// -------------------------------------------------------------
+// MI PERFIL (US-016)
+// -------------------------------------------------------------
+async function cargarPerfil() {
+  const sesion = obtenerSesion();
+  pintarPerfil({ nombre_completo: sesion.usuario.nombre, email: sesion.usuario.email, rol: sesion.usuario.rol });
+  ocultarMensajePerfil();
+
+  try {
+    const res = await apiFetch(`${API_BASE}/perfil`);
+    const json = await res.json();
+    if (json.ok) pintarPerfil(json.data);
+  } catch (err) {
+    // Se mantienen los datos de la sesión
+  }
+}
+
+function pintarPerfil(perfil) {
+  const iniciales = (perfil.nombre_completo || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+  document.getElementById('perfil-iniciales').textContent = iniciales;
+  document.getElementById('perfil-nombre').textContent = perfil.nombre_completo || '';
+  document.getElementById('perfil-email').textContent = perfil.email || '';
+  const rol = document.getElementById('perfil-rol');
+  rol.textContent = perfil.rol === 'ADMIN' ? 'Admin' : 'Usuario';
+  rol.className = `pastilla mt-3 ${perfil.rol === 'ADMIN' ? 'pastilla-navy' : 'pastilla-celeste'}`;
+  document.getElementById('p-nombre').value = perfil.nombre_completo || '';
+  document.getElementById('p-email').value = perfil.email || '';
+}
+
+function mensajePerfil(texto, tipo) {
+  const el = document.getElementById('perfil-mensaje');
+  el.textContent = texto;
+  el.className = `p-3 rounded-xl text-xs font-medium ${tipo === 'ok' ? 'bg-sky-50 text-sky-800' : 'bg-red-50 text-red-700'}`;
+}
+function ocultarMensajePerfil() {
+  document.getElementById('perfil-mensaje').classList.add('hidden');
+}
+
+async function guardarPerfil(e) {
+  e.preventDefault();
+  const sesion = obtenerSesion();
+  const nombre = document.getElementById('p-nombre').value.trim();
+  const email = document.getElementById('p-email').value.trim();
+  const actual = document.getElementById('p-password-actual').value;
+  const nueva = document.getElementById('p-password-nueva').value;
+  const confirmar = document.getElementById('p-password-confirmar').value;
+
+  if (nueva && nueva !== confirmar) return mensajePerfil('La nueva contraseña y su confirmación no coinciden.', 'error');
+
+  // Solo se envían los campos que cambiaron
+  const cambios = {};
+  if (nombre !== sesion.usuario.nombre) cambios.nombre_completo = nombre;
+  if (email.toLowerCase() !== (sesion.usuario.email || '').toLowerCase()) cambios.email = email;
+  if (nueva) cambios.password_nueva = nueva;
+  if (actual) cambios.password_actual = actual;
+  if (!cambios.nombre_completo && !cambios.email && !cambios.password_nueva) return mensajePerfil('No hay cambios que guardar.', 'error');
+
+  const btn = document.getElementById('btn-guardar-perfil');
+  btn.disabled = true;
+  try {
+    const res = await apiFetch(`${API_BASE}/perfil`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cambios),
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      const detalle = json.detalles ? ` ${json.detalles.map(d => d.mensaje).join(' ')}` : '';
+      return mensajePerfil(`${json.error}.${detalle}`, 'error');
+    }
+    // El token nuevo lleva el nombre y correo actualizados
+    guardarSesion(json.data);
+    aplicarPermisosDeRol(json.data.usuario);
+    ['p-password-actual', 'p-password-nueva', 'p-password-confirmar'].forEach(id => { document.getElementById(id).value = ''; });
+    pintarPerfil({ nombre_completo: json.data.usuario.nombre, email: json.data.usuario.email, rol: json.data.usuario.rol });
+    mensajePerfil('Perfil actualizado.', 'ok');
+  } catch (err) {
+    mensajePerfil('No se pudo conectar con el servidor.', 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        Optimizar Rutas (VRP)
-    `;
   }
-};
+}

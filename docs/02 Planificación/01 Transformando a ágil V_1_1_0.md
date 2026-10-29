@@ -91,14 +91,44 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **quiero** ver solo los pedidos que yo registré, mientras el administrador ve el directorio general,  
 **para** gestionar mis entregas sin mezclarlas con las de otros operadores.  
 
-### Historia de Usuario 10
-**ID:** US-010  
+### Historia de Usuario 14
+**ID:** US-014  
 **Título:** Gestión de Usuarios  
 **Épica Relacionada:** EP-03 [Infraestructura y Arquitectura Core]  
 **Redacción:**  
 **Como** Administrador Logístico,  
 **quiero** registrar cuentas, cambiar su rol y activarlas o desactivarlas,  
 **para** controlar quién accede a EcoLogCity sin depender de cambios en la base de datos.  
+
+> **Nota de numeración:** US-010 a US-013 están reservadas para el backlog del Sprint 4 definido en la Revisión del Sprint 3 (recuperación de contraseña, protección de fuerza bruta, auditoría y CI/CD).
+
+### Historia de Usuario 15
+**ID:** US-015  
+**Título:** Planificación Automática de Rutas y Directorio de Rutas  
+**Épica Relacionada:** EP-01 [Módulo de Gestión de Pedidos]  
+**Redacción:**  
+**Como** Administrador Logístico,  
+**quiero** que las rutas se replanifiquen solas cada vez que se registra o cancela un pedido o cambia la flota, y verlas en un directorio por ruta,  
+**para** no depender de un botón y tener siempre el plan vigente de cada vehículo.  
+*Reemplaza la interacción "presionar un botón" de US-003.*
+
+### Historia de Usuario 16
+**ID:** US-016  
+**Título:** Editar Perfil  
+**Épica Relacionada:** EP-03 [Infraestructura y Arquitectura Core]  
+**Redacción:**  
+**Como** usuario o administrador,  
+**quiero** cambiar mi nombre, mi correo y mi contraseña,  
+**para** mantener mis datos de acceso actualizados sin pedírselo al administrador.  
+
+### Historia de Usuario 17
+**ID:** US-017  
+**Título:** Vistas de Supervisión Exclusivas del Administrador  
+**Épica Relacionada:** EP-04 [Dashboard Analítico]  
+**Redacción:**  
+**Como** Administrador Logístico,  
+**quiero** que el Dashboard y el Directorio de rutas sean solo para mi rol,  
+**para** que los usuarios trabajen únicamente con sus pedidos y la información global de la operación quede restringida.  
 
 ### Historia Técnica (Enabler) 1
 **ID:** EN-001  
@@ -150,7 +180,7 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **Cuando** abre el directorio de pedidos  
 **Entonces** ve los pedidos de todos los usuarios con la columna "Registrado por".
 
-### US-010: Gestión de Usuarios
+### US-014: Gestión de Usuarios
 **Escenario 1: Registro de una cuenta**  
 **Dado** que el Administrador está en el módulo "Usuarios"  
 **Cuando** registra un nombre, un correo válido, una contraseña de al menos 8 caracteres y un rol  
@@ -160,6 +190,39 @@ La línea base de requerimientos (documentada en la Fase de Inicio) fue analizad
 **Dado** que el Administrador ve su propia cuenta en la lista  
 **Cuando** intenta desactivarla o quitarle el rol de administrador  
 **Entonces** el sistema lo impide y muestra el motivo.
+
+### US-015: Planificación Automática de Rutas
+**Escenario 1: Pedido nuevo**  
+**Dado** que hay vehículos activos con capacidad disponible  
+**Cuando** un usuario registra un pedido  
+**Entonces** el sistema lo asigna a una ruta sin intervención y el pedido queda en estado PLANIFICADO.  
+
+**Escenario 2: Pedido que no cabe en la flota**  
+**Dado** que la flota activa no tiene capacidad para un pedido  
+**Cuando** se replanifican las rutas  
+**Entonces** el pedido queda en REGISTRADO y aparece en "Pedidos sin asignar" del Directorio de rutas.  
+
+**Escenario 3: Sin flota activa**  
+**Dado** que todos los vehículos están dados de baja  
+**Cuando** se replanifican las rutas  
+**Entonces** ningún pedido queda PLANIFICADO y el directorio muestra el aviso "No hay vehículos activos en la flota".
+
+### US-016: Editar Perfil
+**Escenario 1: Cambio de contraseña**  
+**Dado** que el usuario está en "Mi perfil"  
+**Cuando** ingresa su contraseña actual correcta y una nueva de al menos 8 caracteres  
+**Entonces** el sistema guarda la nueva contraseña cifrada y la sesión continúa con los datos actualizados.  
+
+**Escenario 2: Contraseña actual incorrecta**  
+**Dado** que el usuario quiere cambiar su correo o contraseña  
+**Cuando** la contraseña actual no coincide  
+**Entonces** el sistema rechaza el cambio y muestra "La contraseña actual no es correcta".
+
+### US-017: Vistas Exclusivas del Administrador
+**Escenario 1: Acceso del usuario**  
+**Dado** que un Usuario inicia sesión  
+**Cuando** se abre el panel  
+**Entonces** entra directamente a "Pedidos" y no ve Dashboard, Directorio de rutas ni Usuarios en el menú; si escribe la dirección de esas vistas vuelve a "Pedidos" y la API responde 403.
 
 ### EN-001: Integración Base de Datos Espacial PostGIS
 **Escenario 1: Ejecución de consultas espaciales**  

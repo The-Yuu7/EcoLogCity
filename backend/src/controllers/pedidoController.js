@@ -1,13 +1,17 @@
 const pedidoService = require('../services/pedidoService');
 const { ZodError } = require('zod');
+const { planificarAutomaticamente } = require('../services/rutaService');
 
 async function handleCrearPedido(req, res) {
   try {
     const resultado = await pedidoService.crearPedido(req.body, req.usuario);
+    // Las rutas se replanifican solas con cada pedido nuevo (US-015)
+    await planificarAutomaticamente('pedido registrado');
+    const pedido = await pedidoService.obtenerPedidoPorId(resultado.pedido.id) || resultado.pedido;
     return res.status(201).json({
       ok: true,
       mensaje: 'Pedido registrado con éxito',
-      data: resultado.pedido,
+      data: pedido,
       geocodificacion: resultado.geocodificacion,
     });
   } catch (error) {
@@ -87,6 +91,7 @@ async function handleCancelarPedido(req, res) {
         error: 'Pedido no encontrado para cancelar',
       });
     }
+    await planificarAutomaticamente('pedido cancelado');
     return res.status(200).json({
       ok: true,
       mensaje: 'Pedido cancelado correctamente',

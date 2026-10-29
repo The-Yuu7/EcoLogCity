@@ -59,7 +59,7 @@ Desarrollar e implementar un PMV web que optimice las rutas de distribución urb
 │  [1] Acceso y Usuarios      : Login, roles y gestión de cuentas.       │
 │  [2] Gestión de Pedidos     : Registro, geocodificación y ventanas.    │
 │  [3] Gestión de Flota       : Alta, baja y capacidades de vehículos.   │
-│  [4] Motor de Optimización  : Heurística VRPTW / Green VRP.            │
+│  [4] Motor de Optimización  : Rutas automáticas VRPTW / Green VRP.     │
 │  [5] Visor Cartográfico     : Mapa interactivo (Leaflet/OSM Huancayo). │
 │  [6] Dashboard Analítico    : KPIs logísticos y calculadora de CO₂.    │
 │  [7] Re-enrutamiento        : Ajuste dinámico (planificado).           │
@@ -275,8 +275,8 @@ El sistema requiere iniciar sesión en `login.html`. Los datos semilla crean dos
 
 | Rol | Correo | Contraseña | Permisos |
 | :--- | :--- | :--- | :--- |
-| Administrador | `admin@ecologcity.pe` | `Admin2026!` | Directorio general de pedidos, optimización de rutas y gestión de flota (registrar, dar de baja, reactivar). |
-| Usuario | `usuario@ecologcity.pe` | `Usuario2026!` | Registra pedidos y ve solo los suyos; consulta la flota activa. |
+| Administrador | `admin@ecologcity.pe` | `Admin2026!` | Dashboard, directorio general de pedidos, directorio de rutas (planificadas automáticamente), gestión de flota, gestión de usuarios y su perfil. |
+| Usuario | `usuario@ecologcity.pe` | `Usuario2026!` | Registra pedidos y ve solo los suyos; consulta la flota activa; edita su perfil. |
 
 > La cuenta de administrador también está definida en código (`backend/src/services/authService.js`, `ADMIN_PRUEBA`) para pruebas: permite iniciar sesión aunque la tabla `usuarios` esté vacía. Solo funciona cuando `NODE_ENV` no es `production`.
 
@@ -331,7 +331,7 @@ Acceso directo a la documentación oficial del repositorio:
 * [04. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%202/04%20Retrospectiva%20del%20Sprint%20V_2_0_1.md)
 
 ### Sprint 3 (Sprint 03)
-* [01. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%2003/01%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+* [01. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%2003/01%20Revisi%C3%B3n%20del%20Sprint%20V_1_1_0.md)
 * [02. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%2003/02%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
 * [03. Calidad de Código (SonarQube)](docs/03%20Implementaci%C3%B3n/Sprint%2003/03%20Calidad%20de%20c%C3%B3digo%20V_1_0_0.md)
 * [04. Seguridad OWASP Top 10 2025](docs/03%20Implementaci%C3%B3n/Sprint%2003/04%20OWASP%20V_1_0_0.md)

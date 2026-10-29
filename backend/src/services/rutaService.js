@@ -19,14 +19,25 @@ async function optimizarRutasVRP() {
     const pedidos = pedidosRes.rows;
 
     if (pedidos.length === 0) {
-        return { rutas: [], resumen: { distancia_total_km: 0, ahorro_estimado_km: 0, emisiones_evitadas_kg_co2: 0, pedidos_asignados: 0, pedidos_sin_asignar: 0 } };
+        return { rutas: [], almacen: { lat: -12.0650, lon: -75.2040 }, pedidos_sin_asignar: [], generado_en: new Date().toISOString(), resumen: { distancia_total_km: 0, ahorro_estimado_km: 0, emisiones_evitadas_kg_co2: 0, pedidos_asignados: 0, pedidos_sin_asignar: 0 } };
     }
 
     // 2. Obtener flota activa
     const vehiculosRes = await pool.query("SELECT * FROM vehiculos WHERE activo = true ORDER BY capacidad_peso_kg DESC");
     const vehiculos = vehiculosRes.rows;
 
-    if (vehiculos.length === 0) throw new Error("No hay vehiculos activos en la flota");
+    // Sin flota activa ningún pedido puede planificarse: todos vuelven a REGISTRADO
+    if (vehiculos.length === 0) {
+        await pool.query("UPDATE pedidos SET estado = 'REGISTRADO', updated_at = CURRENT_TIMESTAMP WHERE estado = 'PLANIFICADO'");
+        return {
+            rutas: [],
+            almacen: { lat: -12.0650, lon: -75.2040 },
+            pedidos_sin_asignar: pedidos.map(p => ({ id: p.id, codigo: p.codigo_seguimiento, cliente: p.cliente_nombre, distrito: p.distrito, peso_kg: parseFloat(p.peso_kg) })),
+            generado_en: new Date().toISOString(),
+            aviso: 'No hay vehículos activos en la flota',
+            resumen: { distancia_total_km: 0, ahorro_estimado_km: 0, emisiones_evitadas_kg_co2: 0, pedidos_asignados: 0, pedidos_sin_asignar: pedidos.length }
+        };
+    }
 
     // 3. Heurística Greedy VRP (Asignación a vehículos basándose en capacidad)
     // El punto de partida de DistriRápido (Almacén Central en Huancayo)
@@ -62,6 +73,12 @@ async function optimizarRutasVRP() {
                     lat: pedido.latitud,
                     lon: pedido.longitud,
                     direccion: pedido.direccion_texto,
+                    distrito: pedido.distrito,
+                    peso_kg: peso,
+                    volumen_m3: vol,
+                    ventana_inicio: pedido.ventana_inicio,
+                    ventana_fin: pedido.ventana_fin,
+                    prioridad: pedido.prioridad,
                     distancia_a_parada_km: parseFloat(dist.toFixed(2))
                 });
 
@@ -80,12 +97,19 @@ async function optimizarRutasVRP() {
     // Filtrar rutas vacías
     const rutasFinales = rutasAsignadas.filter(r => r.paradas.length > 0);
 
-    // Sumar distancia de retorno al almacén
+    // Sumar distancia de retorno al almacén y totales de carga por ruta
     let distanciaTotal = 0;
     rutasFinales.forEach(ruta => {
         const distRetorno = calcularDistancia(ruta.ubicacion_actual.lat, ruta.ubicacion_actual.lon, ALMACEN.lat, ALMACEN.lon);
-        ruta.distancia_estimada_km += distRetorno;
+        ruta.distancia_estimada_km = parseFloat((ruta.distancia_estimada_km + distRetorno).toFixed(2));
         distanciaTotal += ruta.distancia_estimada_km;
+
+        const capacidadKg = parseFloat(ruta.vehiculo.capacidad_peso_kg);
+        ruta.peso_total_kg = parseFloat((capacidadKg - ruta.capacidad_restante_kg).toFixed(2));
+        ruta.volumen_total_m3 = parseFloat((parseFloat(ruta.vehiculo.capacidad_volumen_m3) - ruta.capacidad_restante_m3).toFixed(3));
+        ruta.ocupacion_pct = Math.round((ruta.peso_total_kg / capacidadKg) * 100);
+        // Tiempo estimado: 25 km/h promedio urbano + tiempo de servicio de 10 min por parada
+        ruta.tiempo_estimado_min = Math.round((ruta.distancia_estimada_km / 25) * 60 + ruta.paradas.length * 10);
     });
 
     // Métricas Green VRP
@@ -93,20 +117,30 @@ async function optimizarRutasVRP() {
     const ahorroKm = Math.max(0, distanciaNoOptima - distanciaTotal);
     const emisionesEvitadas = (ahorroKm * 0.12) * 2.68; // asumiendo 0.12 gal/km = 0.45 L/km
 
-    // Marcar los pedidos procesados como PLANIFICADO (solo para la db, en un caso real esto se confirmaría primero)
-    // Para no romper las pruebas del usuario, lo dejamos en REGISTRADO o lo actualizamos
-    if(rutasFinales.length > 0) {
-        const ids = [];
-        rutasFinales.forEach(r => r.paradas.forEach(p => ids.push(p.id)));
-        if(ids.length > 0) {
-            const placeholders = ids.map((_, i) => `$${i+1}`).join(',');
-            await pool.query(`UPDATE pedidos SET estado = 'PLANIFICADO' WHERE id IN (${placeholders})`, ids);
-        }
+    // Sincronizar estados: los pedidos asignados quedan PLANIFICADO y los que ya no caben vuelven a REGISTRADO
+    const asignados = [];
+    rutasFinales.forEach(r => r.paradas.forEach(p => asignados.push(p.id)));
+    const sinAsignarIds = pedidosSinAsignar.map(p => p.id);
+    if (asignados.length > 0) {
+        await pool.query("UPDATE pedidos SET estado = 'PLANIFICADO', updated_at = CURRENT_TIMESTAMP WHERE id = ANY($1::uuid[]) AND estado <> 'PLANIFICADO'", [asignados]);
     }
+    if (sinAsignarIds.length > 0) {
+        await pool.query("UPDATE pedidos SET estado = 'REGISTRADO', updated_at = CURRENT_TIMESTAMP WHERE id = ANY($1::uuid[]) AND estado <> 'REGISTRADO'", [sinAsignarIds]);
+    }
+
+    rutasFinales.forEach(r => { delete r.ubicacion_actual; });
 
     return {
         rutas: rutasFinales,
         almacen: ALMACEN,
+        pedidos_sin_asignar: pedidosSinAsignar.map(p => ({
+            id: p.id,
+            codigo: p.codigo_seguimiento,
+            cliente: p.cliente_nombre,
+            distrito: p.distrito,
+            peso_kg: parseFloat(p.peso_kg),
+        })),
+        generado_en: new Date().toISOString(),
         resumen: {
             distancia_total_km: parseFloat(distanciaTotal.toFixed(2)),
             ahorro_estimado_km: parseFloat(ahorroKm.toFixed(2)),
@@ -117,4 +151,18 @@ async function optimizarRutasVRP() {
     };
 }
 
-module.exports = { optimizarRutasVRP };
+/**
+ * Planificación automática (US-015): se ejecuta cada vez que cambian los pedidos o la flota,
+ * sin intervención del usuario. Un error (por ejemplo, flota vacía) no debe impedir
+ * registrar el pedido, por eso solo se informa en el log.
+ */
+async function planificarAutomaticamente(motivo) {
+    try {
+        const { resumen } = await optimizarRutasVRP();
+        console.log(`🧭 Rutas replanificadas (${motivo}): ${resumen.pedidos_asignados} asignados, ${resumen.pedidos_sin_asignar} sin asignar`);
+    } catch (error) {
+        console.warn(`⚠️ No se pudo replanificar las rutas (${motivo}):`, error.message);
+    }
+}
+
+module.exports = { optimizarRutasVRP, planificarAutomaticamente };

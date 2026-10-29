@@ -19,6 +19,8 @@ const {
   handleCambiarEstadoVehiculo,
 } = require('../controllers/vehiculoController');
 const {
+  handleObtenerPerfil,
+  handleActualizarPerfil,
   handleListarUsuarios,
   handleCrearUsuario,
   handleActualizarUsuario,
@@ -52,15 +54,21 @@ router.get('/pedidos/stats', handleObtenerStats);
 router.get('/pedidos/:id', handleObtenerPedidoPorId);
 router.patch('/pedidos/:id/cancelar', handleCancelarPedido);
 
-// Motor de Optimización de Rutas (US-003): solo administrador
+// Motor de Optimización de Rutas (US-003 / US-015): la planificación es automática;
+// GET devuelve el plan vigente para el Directorio de rutas (solo administrador)
+router.get('/rutas', requireRole(ROLES.ADMIN), handleOptimizarRutas);
 router.post('/rutas/optimizar', requireRole(ROLES.ADMIN), handleOptimizarRutas);
+
+// Perfil propio (US-016): cualquier usuario con sesión
+router.get('/perfil', handleObtenerPerfil);
+router.patch('/perfil', handleActualizarPerfil);
 
 // Gestión de Flota de Vehículos (US-008): lectura para todos, cambios solo administrador
 router.get('/vehiculos', handleListarVehiculos);
 router.post('/vehiculos', requireRole(ROLES.ADMIN), handleCrearVehiculo);
 router.patch('/vehiculos/:id/estado', requireRole(ROLES.ADMIN), handleCambiarEstadoVehiculo);
 
-// Gestión de Usuarios (US-010): solo administrador
+// Gestión de Usuarios (US-014): solo administrador
 router.get('/usuarios', requireRole(ROLES.ADMIN), handleListarUsuarios);
 router.post('/usuarios', requireRole(ROLES.ADMIN), handleCrearUsuario);
 router.patch('/usuarios/:id', requireRole(ROLES.ADMIN), handleActualizarUsuario);

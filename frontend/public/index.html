@@ -42,26 +42,38 @@
   <!-- Fondo del menú en pantallas pequeñas -->
   <div id="menu-fondo" class="hidden fixed inset-0 bg-slate-900/40 z-30 lg:hidden"></div>
 
-  <!-- Riel lateral de módulos -->
+  <!-- Riel lateral de módulos (desplegable) -->
   <aside id="menu-lateral"
-    class="fixed lg:sticky top-0 left-0 z-40 h-screen w-20 shrink-0 bg-white flex flex-col items-center py-5
-           -translate-x-full lg:translate-x-0 transition-transform duration-200">
-    <div class="h-11 w-11 rounded-full bg-slate-100 flex items-center justify-center text-slate-900" title="EcoLogCity">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+    class="fixed lg:sticky top-0 left-0 z-40 h-screen shrink-0 bg-white flex flex-col items-center py-5
+           -translate-x-full lg:translate-x-0">
+    <div class="fila-logo flex items-center gap-3">
+      <div class="h-11 w-11 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-900" title="EcoLogCity">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+      </div>
+      <span class="texto-rail text-lg font-medium text-slate-900">EcoLogCity</span>
     </div>
 
-    <nav class="flex-1 flex flex-col items-center gap-3 mt-12" aria-label="Módulos de EcoLogCity">
-      <button data-modulo="dashboard" class="item-rail" aria-label="Dashboard">
+    <button id="btn-expandir-menu" class="item-rail hidden lg:flex mt-6" aria-label="Expandir menú" aria-expanded="false">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+      <span class="etiqueta-rail">Contraer menú</span>
+    </button>
+
+    <nav class="flex-1 flex flex-col items-center gap-3 mt-6" aria-label="Módulos de EcoLogCity">
+      <button data-modulo="dashboard" data-solo-admin class="item-rail hidden" aria-label="Dashboard">
         <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z"/></svg>
         <span class="etiqueta-rail">Dashboard</span>
       </button>
-      <button data-modulo="pedidos" class="item-rail" aria-label="Pedidos y Rutas">
-        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 21a2 2 0 100-4 2 2 0 000 4zM18 7a2 2 0 100-4 2 2 0 000 4zM6 17V10a4 4 0 014-4h4M18 7v7a4 4 0 01-4 4h-4"/></svg>
-        <span class="etiqueta-rail">Pedidos y Rutas</span>
+      <button data-modulo="pedidos" class="item-rail" aria-label="Pedidos">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>
+        <span class="etiqueta-rail">Pedidos</span>
       </button>
-      <button data-modulo="flota" class="item-rail" aria-label="Gestión de Flota">
+      <button data-modulo="rutas" data-solo-admin class="item-rail hidden" aria-label="Directorio de rutas">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 21a2 2 0 100-4 2 2 0 000 4zM18 7a2 2 0 100-4 2 2 0 000 4zM6 17V10a4 4 0 014-4h4M18 7v7a4 4 0 01-4 4h-4"/></svg>
+        <span class="etiqueta-rail">Directorio de rutas</span>
+      </button>
+      <button data-modulo="flota" class="item-rail" aria-label="Gestión de flota">
         <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6.5h11v9H3zM14 9.5h3.5l3 3v3H14M7.5 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM17 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
-        <span class="etiqueta-rail">Gestión de Flota</span>
+        <span class="etiqueta-rail">Gestión de flota</span>
       </button>
       <button data-modulo="usuarios" data-solo-admin class="item-rail hidden" aria-label="Usuarios">
         <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.13a4 4 0 010 7.75M22 21v-1a6 6 0 00-4-5.65"/></svg>
@@ -69,10 +81,16 @@
       </button>
     </nav>
 
-    <button id="btn-cerrar-sesion" class="item-rail" aria-label="Cerrar sesión">
-      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>
-      <span class="etiqueta-rail">Cerrar sesión</span>
-    </button>
+    <div class="flex flex-col items-center gap-3 parte-inferior-rail">
+      <button data-modulo="perfil" class="item-rail" aria-label="Mi perfil">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a7 7 0 0114 0v1"/></svg>
+        <span class="etiqueta-rail">Mi perfil</span>
+      </button>
+      <button id="btn-cerrar-sesion" class="item-rail" aria-label="Cerrar sesión">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 16l-4-4 4-4M6 12h10"/></svg>
+        <span class="etiqueta-rail">Cerrar sesión</span>
+      </button>
+    </div>
   </aside>
 
   <div class="flex-1 min-w-0 flex flex-col">
@@ -90,17 +108,17 @@
     </div>
 
     <!-- Usuario en sesión (US-007) -->
-    <div class="flex items-center gap-3 bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-sm shrink-0">
+    <button id="btn-chip-perfil" class="flex items-center gap-3 bg-white hover:bg-slate-50 rounded-full pl-4 pr-1.5 py-1.5 shadow-sm shrink-0 transition" title="Mi perfil">
       <div class="text-right leading-tight hidden sm:block">
         <div id="sesion-nombre" class="text-sm font-medium text-slate-900">--</div>
-        <div class="text-[11px] text-slate-500">Sesión activa</div>
+        <div class="text-[11px] text-slate-500">Ver perfil</div>
       </div>
       <span id="sesion-rol" class="pastilla"></span>
-    </div>
+    </button>
   </header>
 
   <!-- Main Workspace Container -->
-  <main class="px-4 lg:px-8 py-4 flex-1 w-full max-w-[1400px] space-y-6">
+  <main class="px-4 lg:px-8 py-4 flex-1 w-full space-y-6">
 
     <!-- Módulo Dashboard (US-006) -->
     <section id="modulo-dashboard" data-modulo-panel class="hidden space-y-6" role="tabpanel">
@@ -196,40 +214,8 @@
     </div>
     </section>
 
-    <!-- Módulo Pedidos y Rutas (US-001 a US-005, US-009) -->
+    <!-- Módulo Pedidos (US-001, US-002, US-009) -->
     <section id="modulo-pedidos" data-modulo-panel class="hidden space-y-6" role="tabpanel">
-    <!-- Motor de Optimización de Rutas (US-003) - Solo Administrador -->
-    <div data-solo-admin class="hidden bg-slate-900 p-6 rounded-2xl shadow-sm flex flex-wrap gap-4 justify-between items-center">
-        <div>
-            <h2 class="text-xl font-medium text-white">Motor de Optimización de Rutas</h2>
-            <p class="text-sm text-slate-300 mt-1">Agrupa los pedidos por peso y volumen, respeta las ventanas horarias y traza las rutas más eficientes con OSRM.</p>
-        </div>
-        <button id="btn-optimizar" onclick="optimizarRutas()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-7 rounded-full flex items-center gap-2 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Optimizar rutas
-        </button>
-    </div>
-    
-    <!-- Modal Resumen VRP (Hidden by default) -->
-    <div id="vrp-modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1000]">
-        <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-indigo-100">
-            <h3 class="text-xl font-medium text-indigo-800 mb-4 border-b pb-3 flex items-center gap-2">
-                <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Reporte Green VRP
-            </h3>
-            <div class="space-y-3 text-sm text-slate-700">
-                <div class="flex justify-between items-center bg-slate-50 p-2 rounded"><strong>Distancia Recorrida:</strong> <span id="vrp-dist" class="font-mono text-indigo-600 font-medium"></span> km</div>
-                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Ahorro Logístico:</strong> <span id="vrp-ahorro" class="font-mono font-medium"></span> km</div>
-                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded text-emerald-700"><strong>Emisiones Evitadas:</strong> <span id="vrp-co2" class="font-mono font-medium"></span> kg CO2</div>
-                <div class="flex justify-between items-center bg-blue-50 p-2 rounded text-blue-700 mt-4 border-t pt-2"><strong>Pedidos Asignados:</strong> <span id="vrp-asignados" class="font-mono font-medium"></span></div>
-                <div class="flex justify-between items-center bg-red-50 p-2 rounded text-red-700"><strong>Sin Asignar:</strong> <span id="vrp-noasignados" class="font-mono font-medium"></span></div>
-            </div>
-            <div class="mt-6 flex justify-end">
-                <button onclick="document.getElementById('vrp-modal').classList.add('hidden')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-md">Cerrar y Ver Mapa</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Grid: Registration Form + Interactive Leaflet Map -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -577,11 +563,90 @@
         </div>
       </div>
     </section>
+
+    <!-- Módulo Directorio de rutas (US-015) - Solo Administrador -->
+    <section id="modulo-rutas" data-modulo-panel class="hidden" role="tabpanel">
+      <div class="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:h-[calc(100vh-150px)] lg:min-h-[620px]">
+        <!-- Lista de rutas -->
+        <div class="flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xl font-medium text-slate-900">Rutas planificadas</h2>
+            <span id="rutas-actualizado" class="text-xs text-slate-500"></span>
+          </div>
+          <div id="rutas-resumen" class="grid grid-cols-3 gap-2 mb-3"></div>
+          <div id="rutas-lista" class="flex-1 overflow-y-auto space-y-3 pr-1 pb-1">
+            <div class="bg-white rounded-2xl p-5 text-sm text-slate-400">Planificando rutas...</div>
+          </div>
+        </div>
+
+        <!-- Mapa de la ruta seleccionada -->
+        <div class="relative rounded-2xl overflow-hidden bg-white min-h-[480px]">
+          <div id="mapa-rutas" class="absolute inset-0"></div>
+          <div id="tarjeta-ruta" class="hidden absolute left-4 right-4 bottom-4 z-[500] bg-white rounded-2xl p-5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Módulo Mi perfil (US-016) -->
+    <section id="modulo-perfil" data-modulo-panel class="hidden" role="tabpanel">
+      <div class="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
+        <div class="bg-white rounded-2xl p-6 flex flex-col items-center text-center h-fit">
+          <div id="perfil-iniciales" class="h-20 w-20 rounded-full bg-slate-900 text-white text-2xl font-medium flex items-center justify-center">--</div>
+          <div id="perfil-nombre" class="mt-4 text-lg font-medium text-slate-900">--</div>
+          <div id="perfil-email" class="text-sm text-slate-500">--</div>
+          <span id="perfil-rol" class="pastilla mt-3"></span>
+        </div>
+
+        <form id="form-perfil" class="bg-white rounded-2xl p-6 space-y-5" novalidate>
+          <div>
+            <h2 class="text-lg font-medium text-slate-900">Editar perfil</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Para cambiar el correo o la contraseña debe confirmar su contraseña actual.</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label for="p-nombre" class="block text-xs font-medium text-slate-700 mb-1">Nombre completo</label>
+              <input id="p-nombre" minlength="3" required class="w-full px-3 py-2.5 border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+            </div>
+            <div>
+              <label for="p-email" class="block text-xs font-medium text-slate-700 mb-1">Correo electrónico</label>
+              <input id="p-email" type="email" required autocomplete="email" class="w-full px-3 py-2.5 border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+            </div>
+          </div>
+          <div class="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <label for="p-password-actual" class="block text-xs font-medium text-slate-700 mb-1">Contraseña actual</label>
+              <div class="relative">
+                <input id="p-password-actual" type="password" autocomplete="current-password" class="w-full pl-3 pr-10 py-2.5 border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+                <button type="button" data-visor-para="p-password-actual" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"></button>
+              </div>
+            </div>
+            <div>
+              <label for="p-password-nueva" class="block text-xs font-medium text-slate-700 mb-1">Nueva contraseña (mín. 8)</label>
+              <div class="relative">
+                <input id="p-password-nueva" type="password" minlength="8" autocomplete="new-password" class="w-full pl-3 pr-10 py-2.5 border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+                <button type="button" data-visor-para="p-password-nueva" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"></button>
+              </div>
+            </div>
+            <div>
+              <label for="p-password-confirmar" class="block text-xs font-medium text-slate-700 mb-1">Confirmar nueva contraseña</label>
+              <div class="relative">
+                <input id="p-password-confirmar" type="password" autocomplete="new-password" class="w-full pl-3 pr-10 py-2.5 border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2" />
+                <button type="button" data-visor-para="p-password-confirmar" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700" aria-label="Mostrar contraseña" aria-pressed="false" title="Mostrar contraseña"></button>
+              </div>
+            </div>
+          </div>
+          <div id="perfil-mensaje" class="hidden p-3 rounded-xl text-xs font-medium" role="status"></div>
+          <div class="flex justify-end">
+            <button type="submit" id="btn-guardar-perfil" class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm px-6 py-2.5 rounded-full font-medium transition">Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </section>
   </main>
 
   <!-- Footer Institucional -->
   <footer class="py-5 text-xs text-slate-400">
-    <div class="px-4 lg:px-8 max-w-[1400px] flex flex-wrap justify-between items-center gap-2">
+    <div class="px-4 lg:px-8 flex flex-wrap justify-between items-center gap-2">
       <div>
         <span class="font-medium text-slate-600">EcoLogCity © 2026</span> · Taller de Proyectos 2 · Ingeniería de Sistemas e Informática
       </div>

@@ -4,7 +4,7 @@ const { pool } = require('../src/config/db');
 const { ROLES, signToken } = require('../src/utils/auth');
 
 // Permisos y validaciones del módulo de usuarios: se resuelven antes de consultar la base de datos
-describe('US-010: Gestión de Usuarios', () => {
+describe('US-014: Gestión de Usuarios', () => {
   const ADMIN_ID = '00000000-0000-4000-8000-000000000001';
   const tokenAdmin = signToken({ sub: ADMIN_ID, nombre: 'Admin', email: 'admin@test.pe', rol: ROLES.ADMIN });
   const tokenUsuario = signToken({ sub: 'usuario-test', nombre: 'Usuario', email: 'usuario@test.pe', rol: ROLES.USUARIO });

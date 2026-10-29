@@ -1,5 +1,6 @@
 const usuarioService = require('../services/usuarioService');
 const { ZodError } = require('zod');
+const { signToken } = require('../utils/auth');
 
 function responderError(res, error) {
   if (error instanceof ZodError) {
@@ -45,7 +46,37 @@ async function handleActualizarUsuario(req, res) {
   }
 }
 
+async function handleObtenerPerfil(req, res) {
+  try {
+    const perfil = await usuarioService.obtenerPerfil(req.usuario.id);
+    if (!perfil) return res.status(404).json({ ok: false, error: 'Perfil no encontrado' });
+    return res.status(200).json({ ok: true, data: perfil });
+  } catch (error) {
+    return responderError(res, error);
+  }
+}
+
+/**
+ * Actualiza el perfil propio y devuelve un token nuevo,
+ * porque el token lleva el nombre y el correo del usuario.
+ */
+async function handleActualizarPerfil(req, res) {
+  try {
+    const perfil = await usuarioService.actualizarPerfil(req.usuario.id, req.body);
+    const usuario = { id: perfil.id, nombre: perfil.nombre_completo, email: perfil.email, rol: perfil.rol };
+    return res.status(200).json({
+      ok: true,
+      mensaje: 'Perfil actualizado',
+      data: { token: signToken({ sub: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }), usuario },
+    });
+  } catch (error) {
+    return responderError(res, error);
+  }
+}
+
 module.exports = {
+  handleObtenerPerfil,
+  handleActualizarPerfil,
   handleListarUsuarios,
   handleCrearUsuario,
   handleActualizarUsuario,

@@ -1,6 +1,7 @@
 const vehiculoService = require('../services/vehiculoService');
 const { ZodError } = require('zod');
 const { ROLES } = require('../utils/auth');
+const { planificarAutomaticamente } = require('../services/rutaService');
 
 async function handleListarVehiculos(req, res) {
   try {
@@ -15,6 +16,7 @@ async function handleListarVehiculos(req, res) {
 async function handleCrearVehiculo(req, res) {
   try {
     const vehiculo = await vehiculoService.crearVehiculo(req.body);
+    await planificarAutomaticamente('vehículo registrado');
     return res.status(201).json({ ok: true, mensaje: 'Vehículo registrado en la flota', data: vehiculo });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -40,6 +42,7 @@ async function handleCambiarEstadoVehiculo(req, res) {
     if (!vehiculo) {
       return res.status(404).json({ ok: false, error: 'Vehículo no encontrado' });
     }
+    await planificarAutomaticamente(vehiculo.activo ? 'vehículo reactivado' : 'vehículo dado de baja');
     return res.status(200).json({ ok: true, data: vehiculo });
   } catch (error) {
     return res.status(500).json({ ok: false, error: error.message });

@@ -1,5 +1,9 @@
 const { optimizarRutasVRP } = require('../services/rutaService');
 
+/**
+ * Devuelve el plan de rutas vigente (US-015). El plan se recalcula en cada consulta,
+ * así el directorio de rutas siempre refleja los pedidos y la flota actuales.
+ */
 async function handleOptimizarRutas(req, res) {
   try {
     const resultado = await optimizarRutasVRP();
