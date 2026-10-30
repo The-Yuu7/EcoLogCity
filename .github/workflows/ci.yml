@@ -44,10 +44,18 @@ jobs:
 
       - name: Inicializar Esquema de Base de Datos y Seeds
         run: |
+          echo "⏳ Esperando que PostgreSQL+PostGIS esté listo..."
+          for i in {1..10}; do
+            PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -c "SELECT 1" && break
+            echo "Intento $i fallido, reintentando en 3s..."
+            sleep 3
+          done
+          echo "✅ PostgreSQL listo. Aplicando migraciones..."
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/001_init_postgis_schema.sql
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/002_usuarios_roles.sql
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/001_seed_pedidos_huancayo.sql
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/002_seed_usuarios.sql
+          echo "✅ Esquema y semillas aplicados correctamente."
 
       - name: Ejecutar Pruebas Automatizadas con Cobertura (DoD >= 80%)
         env:

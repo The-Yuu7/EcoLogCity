@@ -55,17 +55,19 @@ async function iniciarSesion(datos) {
     );
     usuario = result.rows[0];
   } catch (err) {
-    console.warn('⚠️ Error al consultar usuarios en BD, ejecutando auto-migración:', err.message);
-    // Si la tabla no existe o hubo error, ejecutar migración automática
-    await autoMigrate();
-    try {
-      const retryResult = await db.query(
-        'SELECT id, nombre_completo, email, password_hash, rol, activo FROM usuarios WHERE LOWER(email) = LOWER($1)',
-        [email]
-      );
-      usuario = retryResult.rows[0];
-    } catch (retryErr) {
-      console.error('❌ Error persistente tras auto-migración:', retryErr.message);
+    console.warn('⚠️ Error al consultar usuarios en BD:', err.message);
+    // En entorno de test, la BD ya está inicializada por CI — no ejecutar auto-migración
+    if (process.env.NODE_ENV !== 'test') {
+      await autoMigrate();
+      try {
+        const retryResult = await db.query(
+          'SELECT id, nombre_completo, email, password_hash, rol, activo FROM usuarios WHERE LOWER(email) = LOWER($1)',
+          [email]
+        );
+        usuario = retryResult.rows[0];
+      } catch (retryErr) {
+        console.error('❌ Error persistente tras auto-migración:', retryErr.message);
+      }
     }
   }
 
