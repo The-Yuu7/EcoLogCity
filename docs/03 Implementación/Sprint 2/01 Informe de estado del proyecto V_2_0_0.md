@@ -2,6 +2,8 @@
 
 [← Volver al README Principal](../../../README.md)
 
+> ⚠️ **Nota de versión:** Este documento corresponde a la versión preliminar histórica `V_2_0_0`. Ha sido superado por la versión oficial vigente aprobada: [01 Informe de estado del proyecto V_2_0_1.md](01%20Informe%20de%20estado%20del%20proyecto%20V_2_0_1.md).
+
 **Nombre del Proyecto:** EcoLogCity
 **Líder del Proyecto:** Albornoz Peña Jeferson Bener
 

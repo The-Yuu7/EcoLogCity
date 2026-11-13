@@ -2,6 +2,8 @@
 
 [← Volver al README Principal](../../README.md)
 
+> ⚠️ **Nota de versión:** Este documento corresponde a la versión preliminar histórica `V_1_0_0`. Ha sido superado por la versión oficial vigente aprobada: [01 Transformando a ágil V_1_1_0.md](01%20Transformando%20a%20%C3%A1gil%20V_1_1_0.md).
+
 ## A. Metodología de Transformación
 La línea base de requerimientos (documentada en la Fase de Inicio) fue analizada para extraer y modelar los componentes ágiles de Jira:
 1. **Requerimientos Funcionales (RF):** Fueron agrupados por módulos de negocio (Ej: Optimización de Rutas, Geolocalización) y transformados en **Épicas**. Estas a su vez se desglosaron en **Historias de Usuario (US)** que aportan valor continuo al cliente (ej. RF-001 -> EP-01 -> US-001).

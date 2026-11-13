@@ -2,6 +2,8 @@
 
 [← Volver al README Principal](../../../README.md)
 
+> ⚠️ **Nota de versión:** Este documento corresponde a la versión preliminar histórica `V_2_0_0`. Ha sido superado por la versión oficial vigente aprobada: [03 Revisión del Sprint V_2_0_1.md](03%20Revisi%C3%B3n%20del%20Sprint%20V_2_0_1.md).
+
 **Nombre del Proyecto:** EcoLogCity
 **Líder del Proyecto:** Albornoz Peña Jeferson Bener
 

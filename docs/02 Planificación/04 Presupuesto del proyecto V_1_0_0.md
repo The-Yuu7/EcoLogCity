@@ -2,7 +2,9 @@
 
 [← Volver al README Principal](../../README.md)
 
-Este documento detalla el modelado financiero integral del PMV de EcoLogCity. Incluye la estimación del esfuerzo técnico, costos de infraestructura y un fondo de contingencia fundamentado en el análisis de riesgos. Se considera un horizonte de 15 semanas (3.5 meses aprox).
+Este documento detalla el modelado financiero integral del PMV de EcoLogCity. Incluye la estimación del esfuerzo técnico, costos de infraestructura y un fondo de contingencia fundamentado en el análisis de riesgos. Se considera un horizonte estandarizado de **14 semanas** (3.5 meses, del 24 de agosto al 04 de diciembre de 2026), sumando **640 horas** de dedicación técnica especializada.
+
+*Nota de Conversión y Marco Presupuestal:* El presupuesto analítico de desarrollo suma **$ 20,015.30 USD**, equivalente a aproximadamente **S/ 75,000 PEN** (tipo de cambio de referencia S/ 3.75 por USD). Este monto constituye el presupuesto de ejecución operativo del PMV, enmarcado dentro del techo presupuestal institucional máximo de S/ 500,000 PEN autorizado en el Acta de Constitución para la transformación logística integral de DistriRápido S.A.C.
 
 ## Estructura Desagregada del Presupuesto
 
@@ -30,7 +32,7 @@ Este documento detalla el modelado financiero integral del PMV de EcoLogCity. In
 | :--- | :--- | :--- | :--- |
 | Instancia App Server (Ej. AWS EC2 t3.medium) | 4 Meses | $30.00 | $ 120.00 |
 | Base de Datos Relacional (RDS PostgreSQL) | 4 Meses | $45.00 | $ 180.00 |
-| Waze CCP API / Servicios Geográficos | 4 Meses | $25.00 (Tier 1) | $ 100.00 |
+| Servicios Cartográficos y Ruteo (OSRM / Nominatim) | 4 Meses | $25.00 (Tier 1) | $ 100.00 |
 | Dominio y Certificados SSL | Anual | N/A | $ 25.00 |
 | **Subtotal Infraestructura** | | | **$ 425.00** |
 

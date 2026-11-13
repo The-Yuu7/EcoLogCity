@@ -21,89 +21,47 @@
 
 ## Historias de Usuario Completadas en este Sprint
 
-### US-005 — Página de Login con Autenticación JWT
-
-| Campo | Detalle |
-|---|---|
-| **ID** | US-005 |
-| **Tipo** | Historia de Usuario |
-| **Título** | Página de inicio de sesión con autenticación JWT |
-| **Descripción** | Como usuario del sistema, quiero acceder mediante una página de login segura para autenticarme y recibir un token JWT que me permita usar las funcionalidades protegidas de EcoLogCity. |
-| **Responsable** | Quispe Aquino Junior (Frontend/UX) |
-| **Estado** | ✅ Completado |
-
-**Criterios de Aceptación Cumplidos:**
-
-- [x] Existe una página `login.html` con formulario de correo y contraseña, estilizada de forma consistente con la identidad visual del proyecto.
-- [x] Al enviar credenciales válidas, el servidor responde con un token JWT firmado (HS256) almacenado en `sessionStorage`.
-- [x] Credenciales inválidas muestran un mensaje de error descriptivo en la interfaz sin exponer información sensible del servidor.
-- [x] El formulario es completamente navegable por teclado (Tab / Enter).
-- [x] Se redirige al dashboard principal (`index.html`) tras un login exitoso.
-- [x] El script `session.js` verifica la existencia del token al cargar cualquier página protegida y redirige al login si no lo encuentra.
-
----
-
-### US-006 — Control de Acceso Basado en Roles (RBAC)
-
-| Campo | Detalle |
-|---|---|
-| **ID** | US-006 |
-| **Tipo** | Historia de Usuario |
-| **Título** | Control de acceso basado en roles ADMIN y USUARIO |
-| **Descripción** | Como administrador, quiero que el sistema distinga entre roles `ADMIN` y `USUARIO` para que cada perfil acceda únicamente a las funciones que le corresponden, garantizando la seguridad de los datos de DistriRápido S.A.C. |
-| **Responsable** | Landa Rojas Alexander Nelson (Backend/Arquitecto) |
-| **Estado** | ✅ Completado |
-
-**Criterios de Aceptación Cumplidos:**
-
-- [x] El middleware `requireRole('ADMIN')` bloquea el acceso a rutas de gestión de vehículos para usuarios con rol `USUARIO`, respondiendo HTTP 403.
-- [x] El dashboard de frontend renderiza elementos de interfaz de administración (panel de vehículos, botón "Agregar pedido manual") sólo cuando `payload.role === 'ADMIN'`.
-- [x] Los usuarios con rol `USUARIO` ven únicamente sus propios pedidos en el directorio de órdenes.
-- [x] El rol queda codificado dentro del payload del JWT y es verificado en cada petición protegida sin consultar la base de datos en cada request.
-- [x] Las pruebas de integración validan que un token de `USUARIO` recibe 403 al acceder a endpoints de `ADMIN`.
-
----
-
-### US-007 — Sistema de Autenticación Completo (hashPassword + signToken + verifyToken)
+### US-007 — Inicio de Sesión y Autenticación Segura (scrypt + JWT HS256)
 
 | Campo | Detalle |
 |---|---|
 | **ID** | US-007 |
 | **Tipo** | Historia de Usuario |
-| **Título** | Sistema de autenticación seguro con hashing scrypt y JWT HS256 |
-| **Descripción** | Como arquitecto del sistema, quiero implementar funciones de seguridad robustas (`hashPassword`, `signToken`, `verifyToken`) para que las credenciales de los usuarios se almacenen y transmitan de forma segura. |
-| **Responsable** | Landa Rojas Alexander Nelson (Backend/Arquitecto) |
+| **Título** | Inicio de sesión, hashing seguro y autenticación con tokens JWT |
+| **Descripción** | Como usuario del sistema, quiero acceder mediante una página de login segura para autenticarme con credenciales protegidas y recibir un token JWT que me permita utilizar las funcionalidades autorizadas de EcoLogCity. |
+| **Responsable** | Quispe Aquino Junior (Frontend/UX) · Landa Rojas Alexander Nelson (Backend/Arquitecto) |
 | **Estado** | ✅ Completado |
 
 **Criterios de Aceptación Cumplidos:**
 
-- [x] `hashPassword(plain)` utiliza el algoritmo `scrypt` de Node.js crypto con salt aleatorio de 16 bytes; el hash resultante se almacena como `salt:hash` en la base de datos.
-- [x] `verifyPassword(plain, stored)` reconstruye el hash con el mismo salt y compara con `timingSafeEqual` para prevenir ataques de timing.
-- [x] `signToken(payload)` genera un JWT firmado con HS256 usando `JWT_SECRET` desde variables de entorno, con expiración configurable (por defecto 8h).
-- [x] `verifyToken(token)` valida la firma y expiry; lanza error descriptivo si el token está expirado o manipulado.
-- [x] El middleware `requireAuth` extrae el token del header `Authorization: Bearer <token>` y adjunta el payload al objeto `req.user`.
-- [x] Ninguna contraseña en texto plano se persiste en la base de datos ni aparece en los logs.
+- [x] Existe una página `login.html` con formulario de correo y contraseña, estilizada con Tailwind CSS y navegable por teclado (Tab / Enter).
+- [x] La función `hashPassword` emplea el algoritmo `scrypt` de Node.js crypto con salt aleatorio de 16 bytes (`salt:hash`), y `verifyPassword` valida con `timingSafeEqual`.
+- [x] Al autenticarse correctamente, el servidor responde con un token JWT firmado (HS256) que almacena `id`, `nombre`, `email` y `rol`, persistido en `sessionStorage`.
+- [x] Credenciales inválidas muestran un mensaje de error descriptivo en la interfaz sin exponer información interna del servidor.
+- [x] El script `session.js` verifica la existencia del token al cargar cualquier página protegida y redirige al login si no se encuentra activo.
+- [x] Se configuró un bloqueo tras 5 intentos fallidos consecutivos como regla de protección ante ataques de fuerza bruta (RN-005).
 
 ---
 
-### US-008 — Endpoints de Gestión de Vehículos con Protección de Rol
+### US-008 — Endpoints de Gestión de Flota de Vehículos con Control de Acceso RBAC
 
 | Campo | Detalle |
 |---|---|
 | **ID** | US-008 |
 | **Tipo** | Historia de Usuario |
 | **Título** | API de vehículos protegida por autenticación y rol ADMIN |
-| **Descripción** | Como administrador, quiero poder crear, leer, actualizar y eliminar registros de vehículos de la flota de DistriRápido S.A.C. mediante una API REST protegida, para mantener el inventario actualizado. |
+| **Descripción** | Como administrador, quiero poder crear, leer, actualizar y dar de baja registros de vehículos de la flota de DistriRápido S.A.C. mediante una API REST protegida por roles, para mantener el inventario operativo actualizado. |
 | **Responsable** | Landa Rojas Alexander Nelson (Backend/Arquitecto) |
 | **Estado** | ✅ Completado |
 
 **Criterios de Aceptación Cumplidos:**
 
-- [x] `GET /api/vehiculos` requiere token válido (cualquier rol); devuelve lista completa de vehículos.
-- [x] `POST /api/vehiculos`, `PUT /api/vehiculos/:id` y `DELETE /api/vehiculos/:id` requieren token con `role === 'ADMIN'`; devuelven 403 en caso contrario.
-- [x] Todas las consultas SQL usan parámetros posicionales (`$1`, `$2`) previniendo inyección SQL.
+- [x] `GET /api/vehiculos` requiere token válido (cualquier rol autenticado); devuelve la lista completa de vehículos activos.
+- [x] `POST /api/vehiculos`, `PUT /api/vehiculos/:id` y `DELETE /api/vehiculos/:id` requieren token con `role === 'ADMIN'`; devuelven HTTP 403 Forbidden a usuarios estándar.
+- [x] El middleware `requireRole('ADMIN')` bloquea de forma centralizada cualquier acción administrativa no autorizada.
+- [x] Todas las consultas SQL usan parámetros posicionales (`$1`, `$2`) con el driver `pg`, previniendo inyecciones SQL (OWASP A03).
 - [x] Las respuestas siguen el estándar REST: 201 Created en POST, 200 OK en PUT/GET, 204 No Content en DELETE.
-- [x] El frontend muestra el panel de vehículos con botones de acción únicamente cuando el usuario tiene rol `ADMIN`.
+- [x] El frontend renderiza el panel de vehículos con botones de acción únicamente cuando el usuario autenticado posee el rol `ADMIN`.
 
 ---
 
@@ -114,17 +72,17 @@
 | **ID** | US-009 |
 | **Tipo** | Historia de Usuario |
 | **Título** | Directorio de órdenes filtrado según el rol del usuario autenticado |
-| **Descripción** | Como usuario, quiero ver únicamente los pedidos que me corresponden según mi rol, para que los repartidores sólo vean sus propias órdenes y los administradores tengan visibilidad total de la operación. |
+| **Descripción** | Como usuario, quiero ver únicamente los pedidos que me corresponden según mi rol, para que los despachadores vean solo sus propias órdenes registradas y los administradores tengan visibilidad total de la operación logística. |
 | **Responsable** | Quispe Aquino Junior (Frontend/UX) + Landa Rojas Alexander Nelson (Backend) |
 | **Estado** | ✅ Completado |
 
 **Criterios de Aceptación Cumplidos:**
 
-- [x] `GET /api/pedidos` para un `ADMIN` devuelve todos los pedidos de la tabla.
-- [x] `GET /api/pedidos` para un `USUARIO` devuelve sólo los pedidos donde `usuario_id = req.user.id`.
-- [x] El frontend consume el endpoint usando `apiFetch` (wrapper que inyecta el header `Authorization: Bearer`) y renderiza la tabla de pedidos dinámicamente.
-- [x] El filtrado ocurre en la capa de backend (SQL `WHERE`), no en el frontend, garantizando que los datos no filtrados nunca llegan al cliente.
-- [x] Los pedidos muestran estado, dirección de destino y hora estimada de entrega.
+- [x] `GET /api/pedidos` para un usuario con rol `ADMIN` devuelve todos los pedidos registrados en el sistema.
+- [x] `GET /api/pedidos` para un usuario con rol `USUARIO` devuelve únicamente los pedidos vinculados a su cuenta (`WHERE usuario_id = $1`).
+- [x] El frontend consume el endpoint usando `apiFetch` (inyectando automáticamente el header `Authorization: Bearer <token>`) y renderiza la tabla dinámicamente.
+- [x] El filtrado de datos ocurre estrictamente en el backend mediante SQL, garantizando que órdenes ajenas nunca viajen al cliente.
+- [x] Los pedidos muestran estado, dirección de destino, coordenadas y ventana horaria acordada.
 
 ---
 
@@ -141,8 +99,8 @@
 
 **Criterios de Aceptación Cumplidos:**
 
-- [x] El script `002_usuarios_roles.sql` crea la tabla `usuarios` con columnas: `id SERIAL PRIMARY KEY`, `correo VARCHAR UNIQUE NOT NULL`, `hash_contrasena TEXT NOT NULL`, `rol VARCHAR(10) CHECK (rol IN ('ADMIN','USUARIO')) NOT NULL`, `creado_en TIMESTAMP DEFAULT NOW()`.
-- [x] Se agrega la columna `usuario_id INTEGER REFERENCES usuarios(id)` a la tabla `pedidos`.
+- [x] El script `002_usuarios_roles.sql` crea la tabla `usuarios` con columnas: `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`, `nombre_completo VARCHAR(150) NOT NULL`, `email VARCHAR(100) UNIQUE NOT NULL`, `password_hash TEXT NOT NULL`, `rol VARCHAR(20) NOT NULL DEFAULT 'USUARIO' CHECK (rol IN ('ADMIN','USUARIO'))`, `activo BOOLEAN DEFAULT TRUE`, `created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP`.
+- [x] Se agrega la columna `usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL` a la tabla `pedidos`.
 - [x] El script es idempotente (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`).
 - [x] La migración se aplica exitosamente en el entorno de Render (PostgreSQL 15) sin errores.
 - [x] Se incluye un usuario semilla ADMIN para pruebas con contraseña hasheada.
@@ -185,7 +143,7 @@ La demostración del Sprint 3 se realizó ante los stakeholders de DistriRápido
 
 1. Con sesión de `ADMIN` activa: se mostró el panel completo con botones de "Gestión de Vehículos" y "Agregar Pedido".
 2. Se cerró sesión y se inició con credenciales de `USUARIO` → el dashboard ocultó automáticamente los controles administrativos.
-3. El directorio de pedidos del `USUARIO` mostró únicamente sus dos órdenes asignadas, mientras que el `ADMIN` ve las 7 órdenes totales en la base de datos.
+3. El directorio de pedidos del `USUARIO` mostró únicamente sus dos órdenes asignadas, mientras que el `ADMIN` ve las 8 órdenes registradas en la base de datos (según datos semilla iniciales).
 
 ### Escenario 3 — API REST Protegida (demostración con Postman)
 

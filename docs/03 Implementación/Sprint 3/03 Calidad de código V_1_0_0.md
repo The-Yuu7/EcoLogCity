@@ -9,8 +9,8 @@
 **Líder del Proyecto:** Albornoz Peña Jeferson Bener  
 
 ## 1. Resumen Ejecutivo de Quality Gate
-- **Estado del Quality Gate:** PASSED
-- **Porcentaje de Cobertura de Pruebas (Coverage):** 78%
+- **Estado del Quality Gate:** PASSED (Aprobación Condicionada)
+- **Porcentaje de Cobertura de Pruebas (Coverage):** 78% (Umbral provisional del Sprint 3: ≥ 75%; la meta final de DoD ≥ 80% se completará en el Sprint 4 incorporando mocks para `rutaService.js` y `geocodingController.js`)
 - **Duplicación de Código:** 4.2%
 
 ## 2. Métricas Principales
@@ -27,8 +27,6 @@
 ---
 
 ## 4. Desglose Detallado de Cobertura y Métricas
-
-### Resultado Global: 78%
 
 ### Resultado Global: 78%
 

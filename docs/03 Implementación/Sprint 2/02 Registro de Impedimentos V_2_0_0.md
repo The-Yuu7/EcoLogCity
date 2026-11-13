@@ -2,6 +2,8 @@
 
 [← Volver al README Principal](../../../README.md)
 
+> ⚠️ **Nota de versión:** Este documento corresponde a la versión preliminar histórica `V_2_0_0`. Ha sido superado por la versión oficial vigente aprobada: [02 Registro de Impedimentos V_2_0_1.md](02%20Registro%20de%20Impedimentos%20V_2_0_1.md).
+
 **Nombre del Proyecto:** EcoLogCity
 **Líder del Proyecto:** Albornoz Peña Jeferson Bener
 
