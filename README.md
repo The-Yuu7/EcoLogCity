@@ -337,6 +337,10 @@ Acceso directo a la documentación oficial del repositorio:
 * [04. Seguridad OWASP Top 10 2025](docs/03%20Implementaci%C3%B3n/Sprint%203/04%20OWASP%20V_1_0_0.md)
 * [05. Accesibilidad WCAG 2.1/2.2](docs/03%20Implementaci%C3%B3n/Sprint%203/05%20WCAG%20V_1_0_0.md)
 
+### Reducción del Impacto Ambiental (Green IT) y Estándares
+* [01. Informe de Reducción del Impacto Ambiental](docs/03%20Implementaci%C3%B3n/reduccion%20del%20impacto%20ambiental/01%20Informe%20de%20reduccion%20del%20impacto%20ambiental%20V_1_0_0.md)
+* [02. Estándares de Ingeniería de Software](docs/03%20Implementaci%C3%B3n/reduccion%20del%20impacto%20ambiental/02%20Estandares%20Ingenier%C3%ADa%20de%20software%20V_1_0_0.md)
+
 ---
 <div align="center">
   <sub>Escuela Profesional de Ingeniería de Sistemas e Informática – Taller de Proyectos 2 – 2026</sub>
