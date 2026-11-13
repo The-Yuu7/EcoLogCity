@@ -14,8 +14,10 @@ function calcularDistancia(lat1, lon1, lat2, lon2) {
 }
 
 async function optimizarRutasVRP() {
-    // 1. Obtener pedidos pendientes
-    const pedidosRes = await pool.query("SELECT * FROM pedidos WHERE estado IN ('REGISTRADO', 'PLANIFICADO') ORDER BY prioridad DESC, ventana_inicio ASC");
+    // 1. Obtener pedidos pendientes (Green IT: solo las columnas que usa el motor VRP)
+    const pedidosRes = await pool.query(`SELECT id, codigo_seguimiento, cliente_nombre, direccion_texto, distrito, latitud, longitud,
+                peso_kg, volumen_m3, ventana_inicio, ventana_fin, prioridad
+         FROM pedidos WHERE estado IN ('REGISTRADO', 'PLANIFICADO') ORDER BY prioridad DESC, ventana_inicio ASC`);
     const pedidos = pedidosRes.rows;
 
     if (pedidos.length === 0) {

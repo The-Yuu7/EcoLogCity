@@ -7,6 +7,7 @@ const DATABASE_DIR = path.join(__dirname, '../../../database');
 const SCRIPTS = [
   { tipo: 'migración', archivo: 'migrations/001_init_postgis_schema.sql' },
   { tipo: 'migración', archivo: 'migrations/002_usuarios_roles.sql' },
+  { tipo: 'migración', archivo: 'migrations/003_indices_green_it.sql' },
   { tipo: 'semilla', archivo: 'seeds/001_seed_pedidos_huancayo.sql' },
   { tipo: 'semilla', archivo: 'seeds/002_seed_usuarios.sql' },
 ];

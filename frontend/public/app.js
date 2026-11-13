@@ -760,27 +760,17 @@ window.centrarEnMapa = async function (id) {
     .bindPopup(`<div style="font-weight:500">${escaparHtml(pedido.direccion_texto)}, ${escaparHtml(pedido.distrito)}</div><div style="opacity:.75">${escaparHtml(pedido.cliente_nombre)}</div>`, OPCIONES_POPUP)
     .openPopup();
   
-  // Fetch OSRM route for single item
-  try {
-      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${almacenLon},${almacenLat};${lon},${lat}?overview=full&geometries=geojson`;
-      const res = await fetch(osrmUrl);
-      const data = await res.json();
-      
-      if(data.routes && data.routes.length > 0) {
-          const geojsonFeature = data.routes[0].geometry;
-          L.geoJSON(geojsonFeature, {
-              style: { color: MARCA.naranja, weight: 3, opacity: 0.95, dashArray: '2, 6', lineCap: 'round' }
-          }).addTo(singleRouteLayerGroup);
-          
-          // Ajustar la vista para que se vea toda la ruta
-          const bounds = L.latLngBounds([almacenLat, almacenLon], [lat, lon]);
-          map.flyToBounds(bounds, { padding: [50, 50], duration: 1.2 });
-      } else {
-          map.flyTo([lat, lon], 17, { duration: 1.2 });
-      }
-  } catch(e) {
-      console.warn("Error OSRM", e);
-      map.flyTo([lat, lon], 17, { duration: 1.2 });
+  // Trazado por calles desde OSRM. Green IT: pasa por la caché de trazadoRuta, así volver
+  // a abrir el mismo pedido no repite la petición externa.
+  const trazo = await trazadoRuta([[almacenLat, almacenLon], [lat, lon]]);
+  if (trazo.length > 2) {
+    L.polyline(trazo, { color: MARCA.naranja, weight: 3, opacity: 0.95, dashArray: '2, 6', lineCap: 'round' })
+      .addTo(singleRouteLayerGroup);
+    // Ajustar la vista para que se vea toda la ruta
+    const bounds = L.latLngBounds([almacenLat, almacenLon], [lat, lon]);
+    map.flyToBounds(bounds, { padding: [50, 50], duration: 1.2 });
+  } else {
+    map.flyTo([lat, lon], 17, { duration: 1.2 });
   }
 };
 

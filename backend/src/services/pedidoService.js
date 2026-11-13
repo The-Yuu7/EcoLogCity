@@ -113,13 +113,35 @@ async function crearPedido(datos, usuario = null) {
   };
 }
 
+// Green IT: el listado solo devuelve las columnas que pinta la interfaz (mapa, tabla y resumen).
+// El detalle por ID (obtenerPedidoPorId) sigue devolviendo el registro completo.
+const COLUMNAS_LISTADO = `p.id, p.codigo_seguimiento, p.cliente_nombre, p.cliente_telefono,
+  p.direccion_texto, p.distrito, p.referencia, p.latitud, p.longitud, p.peso_kg, p.volumen_m3,
+  p.ventana_inicio, p.ventana_fin, p.prioridad, p.estado, p.created_at`;
+
+const LIMITE_POR_DEFECTO = 50;
+const LIMITE_MAXIMO = 200;
+
 /**
- * Obtiene la lista de pedidos con filtros opcionales, incluyendo quién registró cada pedido
+ * Normaliza los parámetros de paginación. Devuelve null si no se pidió página
+ * (el mapa necesita todas las paradas, por eso la paginación es opcional).
+ */
+function normalizarPaginacion(filtros) {
+  if (filtros.page === undefined) return null;
+  const page = Math.max(parseInt(filtros.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(filtros.limit, 10) || LIMITE_POR_DEFECTO, 1), LIMITE_MAXIMO);
+  return { page, limit, offset: (page - 1) * limit };
+}
+
+/**
+ * Obtiene la lista de pedidos con filtros opcionales, incluyendo quién registró cada pedido.
+ * Con `page` (y opcionalmente `limit`) devuelve { data, pagination }; sin `page`, un arreglo.
  */
 async function listarPedidos(filtros = {}, usuario = null) {
   const params = [];
+  const paginacion = normalizarPaginacion(filtros);
   let query = `
-    SELECT p.*, u.nombre_completo AS registrado_por
+    SELECT ${COLUMNAS_LISTADO}, u.nombre_completo AS registrado_por${paginacion ? ', COUNT(*) OVER() AS total_filas' : ''}
     FROM pedidos p
     LEFT JOIN usuarios u ON u.id = p.usuario_id
     WHERE 1=1`;
@@ -137,13 +159,28 @@ async function listarPedidos(filtros = {}, usuario = null) {
 
   query += ' ORDER BY p.created_at DESC';
 
-  if (filtros.limit) {
-    params.push(parseInt(filtros.limit, 10));
+  if (paginacion) {
+    params.push(paginacion.limit, paginacion.offset);
+    query += ` LIMIT $${params.length - 1} OFFSET $${params.length}`;
+  } else if (filtros.limit) {
+    params.push(Math.min(parseInt(filtros.limit, 10) || LIMITE_MAXIMO, LIMITE_MAXIMO));
     query += ` LIMIT $${params.length}`;
   }
 
   const result = await db.query(query, params);
-  return result.rows;
+  if (!paginacion) return result.rows;
+
+  const total = result.rows.length ? parseInt(result.rows[0].total_filas, 10) : 0;
+  const data = result.rows.map(({ total_filas, ...pedido }) => pedido);
+  return {
+    data,
+    pagination: {
+      total,
+      page: paginacion.page,
+      limit: paginacion.limit,
+      totalPages: Math.ceil(total / paginacion.limit),
+    },
+  };
 }
 
 /**

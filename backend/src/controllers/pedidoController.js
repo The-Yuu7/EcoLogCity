@@ -31,12 +31,16 @@ async function handleCrearPedido(req, res) {
 
 async function handleListarPedidos(req, res) {
   try {
-    const { distrito, estado, limit } = req.query;
-    const pedidos = await pedidoService.listarPedidos({ distrito, estado, limit }, req.usuario);
+    const { distrito, estado, limit, page } = req.query;
+    const resultado = await pedidoService.listarPedidos({ distrito, estado, limit, page }, req.usuario);
+    if (Array.isArray(resultado)) {
+      return res.status(200).json({ ok: true, total: resultado.length, data: resultado });
+    }
     return res.status(200).json({
       ok: true,
-      total: pedidos.length,
-      data: pedidos,
+      total: resultado.pagination.total,
+      data: resultado.data,
+      pagination: resultado.pagination,
     });
   } catch (error) {
     return res.status(500).json({

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "npx serve public -l 3000",
     "start": "npx serve public -l 3000",
-    "test": "echo \"Frontend test: verificacion de interfaz y archivos estaticos completada exitosamente\""
+    "test": "echo \"Frontend test: verificacion de interfaz y archivos estaticos completada exitosamente\"",
+    "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.input.css -o public/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i src/tailwind.input.css -o public/tailwind.css --watch"
   },
   "keywords": [
     "leaflet",
@@ -14,5 +16,8 @@
     "vrptw"
   ],
   "author": "EcoLogCity Team",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "3.4.19"
+  }
 }
