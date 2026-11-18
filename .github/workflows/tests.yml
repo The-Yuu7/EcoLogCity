@@ -1,0 +1,129 @@
+name: Tests - EcoLogCity Unit, Integration & Playwright E2E
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  backend-tests:
+    name: Backend Jest Tests & PostGIS Integration
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: ecologcity_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js (v22 LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
+
+      - name: Instalar Dependencias Backend
+        run: |
+          cd backend
+          npm ci || npm install
+
+      - name: Inicializar Esquema de Base de Datos y Semillas
+        run: |
+          echo "⏳ Esperando a que PostgreSQL+PostGIS esté disponible..."
+          for i in {1..10}; do
+            PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -c "SELECT 1" && break
+            echo "Intento $i fallido, reintentando en 3s..."
+            sleep 3
+          done
+          echo "✅ PostgreSQL listo. Aplicando migraciones y semillas..."
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/001_init_postgis_schema.sql
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/migrations/002_usuarios_roles.sql
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/001_seed_pedidos_huancayo.sql
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d ecologcity_db -f database/seeds/002_seed_usuarios.sql
+
+      - name: Ejecutar Pruebas Automatizadas Jest con Cobertura
+        env:
+          PORT: 8000
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: ecologcity_db
+          DB_USER: postgres
+          DB_PASSWORD: postgrespassword
+          JWT_SECRET: dev-secret-ecologcity-2026-jwt-key
+        run: |
+          cd backend
+          npm run test:coverage
+
+      - name: Almacenar Reporte de Cobertura Backend como Artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/coverage/
+          retention-days: 14
+
+      - name: Análisis de Calidad SonarCloud
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  playwright-e2e:
+    name: Frontend E2E Tests con Playwright (Chromium, Firefox, WebKit)
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js (v22 LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Instalar Dependencias Backend y Frontend
+        run: |
+          cd backend && (npm ci || npm install)
+          cd ../frontend && (npm ci || npm install)
+
+      - name: Instalar Navegadores de Playwright con Dependencias del Sistema
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Ejecutar Pruebas E2E de Playwright en Modo Headless
+        env:
+          CI: true
+          PORT: 8000
+          NODE_ENV: test
+          JWT_SECRET: dev-secret-ecologcity-2026-jwt-key
+        run: |
+          cd frontend
+          npx playwright test
+
+      - name: Almacenar Reporte HTML de Playwright como Artefacto
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-html-report
+          path: frontend/playwright-report/
+          retention-days: 14

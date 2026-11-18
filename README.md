@@ -3,8 +3,11 @@
 # EcoLogCity
 ### Plataforma de Optimización de Rutas Sostenibles de Última Milla - Huancayo
 
-[![Estado](https://img.shields.io/badge/Estado-Fase%20de%20Inicio-2ea44f?style=flat-square)](docs/01%20Inicio)
-[![Versión](https://img.shields.io/badge/Versión-v1.0.0--alpha-blue?style=flat-square)](README.md)
+[![Estado](https://img.shields.io/badge/Estado-Sprint%204%20Cierre%20%26%20Calidad-2ea44f?style=flat-square)](docs/03%20Implementaci%C3%B3n/Sprint%204/01%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+[![Versión](https://img.shields.io/badge/Versión-v1.0.0--final-blue?style=flat-square)](README.md)
+[![CI](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/ci.yml/badge.svg)](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/ci.yml)
+[![Tests E2E & Unit](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/tests.yml/badge.svg)](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/tests.yml)
+[![Deploy Production](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/The-Yuu7/EcoLogCity/actions/workflows/deploy-production.yml)
 [![Metodología](https://img.shields.io/badge/Metodología-Scrum%20%2B%20Git%20Flow-6f42c1?style=flat-square)](docs/01%20Inicio/01.%20Selección%20del%20enfoque%20del%20proyecto%20V_1_0_0.md)
 [![Curso](https://img.shields.io/badge/Asignatura-Taller%20de%20Proyectos%202-0969da?style=flat-square)](README.md)
 [![Ubicación](https://img.shields.io/badge/Ubicación-Huancayo%2C%20Perú-d97706?style=flat-square)](README.md)
@@ -151,7 +154,11 @@ flowchart TD
 ```text
 EcoLogCity/
 │
-├── .github/                       # Plantillas de PRs e Issues
+├── .github/                       # Plantillas y flujos de automatización
+│   ├── workflows/                 # CI/CD GitHub Actions
+│   │   ├── ci.yml                 # Build, Lint y validación de dependencias
+│   │   ├── tests.yml              # Pruebas Jest + Playwright E2E + Artefactos
+│   │   └── deploy-production.yml  # Despliegue continuo en Render Cloud
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.md
 │   │   └── feature_request.md
@@ -159,29 +166,27 @@ EcoLogCity/
 │
 ├── docs/                          # Documentación formal (Estándares PMI / Ágil)
 │   ├── 01 Inicio/                 # Fase de inicio y gobernanza
-│   │   ├── 01. Selección del enfoque del proyecto V_1_0_0.md
-│   │   ├── 02. Acta de constitución V_1_0_0.md
-│   │   ├── 03. Declaración de la visión V_1_0_0.md
-│   │   ├── 04. Registro de supuestos y restricciones V_1_0_0.md
-│   │   └── 05. Registro de interesados V_1_0_0.md
 │   ├── 02 Planificación/          # Cronogramas, backlog y EDT/WBS
-│   ├── 03 Implementación/             # Entregables de los Sprints
+│   ├── 03 Implementación/         # Entregables de los Sprints
 │   │   ├── Sprint 1/
 │   │   ├── Sprint 2/
-│   │   └── Sprint 3/                  # (Sprint 3) Revisión, Retrospectiva, SonarQube, OWASP, WCAG
+│   │   ├── Sprint 3/              # (Sprint 3) Revisión, Retrospectiva, SonarQube, OWASP, WCAG
+│   │   └── Sprint 4/              # (Sprint 4) Revisión, Retrospectiva, Playwright E2E, Usabilidad SUS
 │   ├── 04 Ejecución/              # Diseños técnicos y especificaciones
 │   ├── 05 Seguimiento y Control/  # Minutas de sprint y métricas QA
 │   ├── 06 Cierre/                 # Informes de entrega de PMV
 │   └── otros/                     # Material técnico de soporte
 │
 ├── frontend/                      # Aplicación cliente (Web UI)
-│   ├── src/                       # Componentes, vistas y servicios cliente
-│   ├── tests/                     # Pruebas de interfaz
-│   └── public/                    # Archivos estáticos
+│   ├── e2e/                       # Pruebas automatizadas E2E Playwright
+│   ├── public/                    # Archivos estáticos, vistas HTML y controladores
+│   ├── src/                       # Estilos Tailwind CSS
+│   ├── playwright.config.ts       # Configuración multiplataforma Playwright
+│   └── package.json
 │
 ├── backend/                       # Servidor API y Algoritmo de Optimización
 │   ├── src/                       # Controladores, servicios y motor metaheurístico
-│   └── tests/                     # Pruebas unitarias e integración
+│   └── tests/                     # Pruebas unitarias e integración Jest
 │
 ├── database/                      # Esquemas de Base de Datos y Datos Semilla
 │   ├── migrations/                # Scripts DDL y control de migraciones
@@ -310,13 +315,13 @@ Acceso directo a la documentación oficial del repositorio:
 * [05. Registro de interesados](docs/01%20Inicio/05.%20Registro%20de%20interesados%20V_1_0_0.md)
 
 ## Fase 02: Planificación del Proyecto
-* [01. Transformando a ágil](docs/02%20Planificación/01%20Transformando%20a%20ágil%20V_1_1_0.md)
+* [01. Transformando a ágil](docs/02%20Planificación/01%20Transformando%20a%20ágil%20V_1_2_0.md)
 * [02. Artefactos Jira](docs/02%20Planificación/02%20Artefactos%20Jira%20V_1_0_0.md)
 * [03. Registro de riesgos](docs/02%20Planificación/03%20Registro%20de%20riesgos%20V_1_0_0.md)
 * [04. Presupuesto del proyecto](docs/02%20Planificación/04%20Presupuesto%20del%20proyecto%20V_1_0_0.md)
 
 
-## Fase 03: Implementación (Sprint 1, 2 y 3)
+## Fase 03: Implementación (Sprint 1, 2, 3 y 4)
 
 ### Sprint 1
 * [01. Informe de estado del proyecto](docs/03%20Implementaci%C3%B3n/Sprint%201/01%20Informe%20de%20estado%20del%20proyecto%20V_1_0_1.md)
@@ -336,6 +341,12 @@ Acceso directo a la documentación oficial del repositorio:
 * [03. Calidad de Código (SonarQube)](docs/03%20Implementaci%C3%B3n/Sprint%203/03%20Calidad%20de%20c%C3%B3digo%20V_1_0_0.md)
 * [04. Seguridad OWASP Top 10 2025](docs/03%20Implementaci%C3%B3n/Sprint%203/04%20OWASP%20V_1_0_0.md)
 * [05. Accesibilidad WCAG 2.1/2.2](docs/03%20Implementaci%C3%B3n/Sprint%203/05%20WCAG%20V_1_0_0.md)
+
+### Sprint 4 (Cierre, E2E Playwright, Usabilidad SUS y CI/CD)
+* [01. Revisión del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%204/01%20Revisi%C3%B3n%20del%20Sprint%20V_1_0_0.md)
+* [02. Retrospectiva del Sprint](docs/03%20Implementaci%C3%B3n/Sprint%204/02%20Retrospectiva%20del%20Sprint%20V_1_0_0.md)
+* [03. Análisis Playwright](docs/03%20Implementaci%C3%B3n/Sprint%204/03%20Analisis%20PlayWrigth%20V_1_0_0.md)
+* [04. Usabilidad Cuantitativa (SUS)](docs/03%20Implementaci%C3%B3n/Sprint%204/04%20Usabilidad%20V_1_0_0.md)
 
 ### Reducción del Impacto Ambiental (Green IT) y Estándares
 * [01. Informe de Reducción del Impacto Ambiental](docs/03%20Implementaci%C3%B3n/reduccion%20del%20impacto%20ambiental/01%20Informe%20de%20reduccion%20del%20impacto%20ambiental%20V_1_0_0.md)

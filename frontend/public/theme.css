@@ -24,6 +24,9 @@ input:focus, select:focus, textarea:focus { border-color: #242E42 !important; --
   color: #242E42;
   transition: background-color .15s, color .15s;
 }
+.item-rail.hidden, [data-solo-admin].hidden {
+  display: none !important;
+}
 .item-rail:hover { background-color: #F0F2F5; }
 .item-rail[aria-current="page"] { background-color: #DF4927; color: #fff; }
 .item-rail svg { width: 20px; height: 20px; }

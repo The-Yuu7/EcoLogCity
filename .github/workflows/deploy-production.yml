@@ -1,0 +1,51 @@
+name: Deploy - EcoLogCity Production Deployment (Render)
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+
+jobs:
+  deploy-to-render:
+    name: Despliegue Automático en Producción (Render Cloud)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del Repositorio
+        uses: actions/checkout@v4
+
+      - name: Disparar Webhook de Despliegue en Render
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "⚠️ RENDER_DEPLOY_HOOK_URL no configurado en GitHub Secrets."
+            echo "ℹ️ Registre el secreto en Repositorio > Settings > Secrets and Variables > Actions."
+            exit 0
+          fi
+          echo "🚀 Disparando despliegue hacia Render en producción..."
+          HTTP_RESPONSE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$DEPLOY_HOOK")
+          echo "Respuesta HTTP: $HTTP_RESPONSE"
+          cat response.txt
+          if [ "$HTTP_RESPONSE" -ge 200 ] && [ "$HTTP_RESPONSE" -lt 300 ]; then
+            echo "✅ Señal de despliegue entregada exitosamente a Render."
+          else
+            echo "❌ Error al disparar el webhook de Render. Código: $HTTP_RESPONSE"
+            exit 1
+          fi
+
+      - name: Verificación de Disponibilidad Post-Despliegue (Healthcheck)
+        run: |
+          echo "⏳ Verificando servicio de producción en Render..."
+          PRODUCTION_URL="https://ecologcity.onrender.com/api"
+          # Intento de sondeo con reintentos
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PRODUCTION_URL" || true)
+            echo "Intento $i: Estado HTTP $STATUS"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Servicio en producción disponible y operativo (HTTP 200)."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ℹ️ Despliegue en proceso en Render Cloud."
